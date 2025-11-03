@@ -17,6 +17,11 @@ public abstract class ContBancar {
     public abstract  void depune( double suma );
 
     public double getSold() { return sold; }
+
+    public void setSold(double sold) {
+        this.sold = sold;
+    }
+
     public int getId() { return id; }
     public Client getClient() { return client; }
     public String getValuta() { return valuta; }
