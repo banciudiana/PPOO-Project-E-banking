@@ -54,7 +54,7 @@ public class Client {
         return scor;
     }
 
-    public boolean isEsteAdmin() {
+    public boolean esteAdmin() {
         return esteAdmin;
     }
 

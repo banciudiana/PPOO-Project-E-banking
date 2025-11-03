@@ -1,31 +1,48 @@
+import exceptions.DateInvalideException;
 import model.*;
+import service.Banca;
+import service.Validare;
 
 public class Main {
 
 
     public static void main(String[] args) {
-        Client c1 = new Client(1, "Ion Popescu", "ion@gmail.com", "1234",false);
-        Client c2 = new Client(2, "Maria Ionescu", "maria@yahoo.com", "abcd", false);
+        System.out.println("=== Test initializare banca ===");
 
+        // Initializare banca - citeste datele din fisiere
+        Banca banca = new Banca();
 
-        ContCurent cc = new ContCurent(1, 1500, c1, "RON");
-        ContEconomii ce = new ContEconomii(2, 2000, c2, "EUR");
-        ContCredit cd = new ContCredit(3, -1200, c1, "RON");
-
-        try {
-            cc.retrage(200);
-            ce.depune(500);
-            cd.retrage(1000);
-        } catch (Exception e) {
-            System.out.println("Eroare: " + e.getMessage());
+        // Afisare clienti
+        System.out.println("Clienti incarcati: " + banca.getClienti().size());
+        for (Client c : banca.getClienti()) {
+            System.out.println(" - " + c.getId() + " | " + c.getNume() + " | " + c.getEmail());
         }
 
+        // Afisare conturi
+        System.out.println("\nConturi incarcate: " + banca.getConturi().size());
+        for (ContBancar cont : banca.getConturi().values()) {
+            System.out.println(" - " + cont.getId() + " | " + cont.getClient().getNume() +
+                    " | " + cont.getSold() + " " + cont.getValuta() +
+                    " | " + cont.getClass().getSimpleName());
+        }
 
-        System.out.println(cc);
-        System.out.println(ce + " | Dobândă: " + ce.calculeazaDobanda());
-        System.out.println(cd + " | Dobândă datorie: " + cd.calculeazaDobandaDatorie());
+        // Test validare
+        System.out.println("\n=== Test validari ===");
+        try {
+            Validare.valideazaEmail("iongmail.com");
+        } catch (DateInvalideException e) {
+            System.out.println("Exceptie prinsa corect: " + e.getMessage());
+        }
 
-        Tranzactie t = new Tranzactie(1, cc, ce, 100, "Transfer");
-        System.out.println(t);
+        try {
+            Validare.valideazaSuma(-5);
+        } catch (DateInvalideException e) {
+            System.out.println("Exceptie prinsa corect: " + e.getMessage());
+        }
+
+        // Test salvare
+        System.out.println("\n=== Test salvare date ===");
+        banca.salveazaDate();
+        System.out.println("Date salvate cu succes.");
     }
 }

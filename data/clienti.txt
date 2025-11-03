@@ -1,0 +1,2 @@
+1;Ion Popescu;ion.popescu@gmail.com;1234;false
+2;Maria Ionescu;maria.ionescu@gmail.com;abcd;false
