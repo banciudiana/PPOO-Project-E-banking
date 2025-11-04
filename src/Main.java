@@ -1,8 +1,7 @@
-import exceptions.DateInvalideException;
-import model.*;
 import service.Banca;
 import service.BancaConsole;
-import service.Validare;
+
+import javax.swing.*;
 
 public class Main {
 
@@ -10,6 +9,8 @@ public class Main {
     public static void main(String[] args) {
         Banca banca = new Banca();
         BancaConsole console = new BancaConsole(banca);
-        console.start();
+        //console.start();
+
+        SwingUtilities.invokeLater(() -> new gui.LoginFrame(banca).setVisible(true));
     }
 }
