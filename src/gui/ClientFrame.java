@@ -6,6 +6,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Random;
 
 /**
  * Interfata GUI pentru un client logat.
@@ -34,6 +35,7 @@ public class ClientFrame extends JFrame {
         tabbedPane.addTab("Creaza cont nou", creeazaPanelCreareCont());
         tabbedPane.addTab("Operatiuni", creeazaPanelOperatiuni());
         tabbedPane.addTab("Statistici", creeazaPanelStatistici());
+        tabbedPane.addTab("Istoric tranzacții", creeazaPanelTranzactii());
 
         add(tabbedPane);
     }
@@ -118,13 +120,17 @@ public class ClientFrame extends JFrame {
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
         JButton depunereBtn = new JButton("Depunere");
         JButton retragereBtn = new JButton("Retragere");
+        JButton transferBtn = new JButton("Transfer");
 
         depunereBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         retragereBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        transferBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
         menuPanel.add(Box.createVerticalStrut(20));
         menuPanel.add(depunereBtn);
         menuPanel.add(Box.createVerticalStrut(10));
         menuPanel.add(retragereBtn);
+        menuPanel.add(Box.createVerticalStrut(10));
+        menuPanel.add(transferBtn);
         menuPanel.add(Box.createVerticalGlue());
 
         JPanel contentPanel = new JPanel(new BorderLayout());
@@ -302,6 +308,137 @@ public class ClientFrame extends JFrame {
             contentPanel.repaint();
         });
 
+        transferBtn.addActionListener(e -> {
+            contentPanel.removeAll();
+            contentPanel.setLayout(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(8, 8, 8, 8);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+
+            // Dropdown conturi sursă (doar ale clientului curent)
+            JComboBox<String> contSursaBox = new JComboBox<>();
+            for (ContBancar c : banca.getConturi().values()) {
+                if (c.getClient().getId() == client.getId()) {
+                    contSursaBox.addItem(c.getId() + " - " + c.getClass().getSimpleName() + " (" + c.getValuta() + ")");
+                }
+            }
+
+            // Dropdown conturi destinație (toate conturile din bancă)
+            JComboBox<String> contDestBox = new JComboBox<>();
+            for (ContBancar c : banca.getConturi().values()) {
+                contDestBox.addItem(c.getId() + " - " + c.getClient().getNume() + " (" + c.getValuta() + ")");
+            }
+
+            JTextField sumaField = new JTextField();
+            sumaField.addKeyListener(new java.awt.event.KeyAdapter() {
+                public void keyTyped(java.awt.event.KeyEvent evt) {
+                    char ch = evt.getKeyChar();
+                    if (!Character.isDigit(ch) && ch != '.' && ch != '\b') evt.consume();
+                }
+            });
+
+            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+            JButton transferaBtn = new JButton("Transferă");
+
+            gbc.gridx = 0; gbc.gridy = 0; contentPanel.add(new JLabel("Din contul:"), gbc);
+            gbc.gridx = 1; contentPanel.add(contSursaBox, gbc);
+            gbc.gridx = 0; gbc.gridy = 1; contentPanel.add(new JLabel("În contul:"), gbc);
+            gbc.gridx = 1; contentPanel.add(contDestBox, gbc);
+            gbc.gridx = 0; gbc.gridy = 2; contentPanel.add(new JLabel("Suma:"), gbc);
+            gbc.gridx = 1; contentPanel.add(sumaField, gbc);
+            gbc.gridx = 0; gbc.gridy = 3; contentPanel.add(new JLabel("Valuta:"), gbc);
+            gbc.gridx = 1; contentPanel.add(valutaBox, gbc);
+            gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
+            contentPanel.add(transferaBtn, gbc);
+
+            // ======== LOGICA TRANSFER ========
+            transferaBtn.addActionListener(ev -> {
+                try {
+                    if (contSursaBox.getSelectedItem() == null || contDestBox.getSelectedItem() == null) {
+                        JOptionPane.showMessageDialog(this, "Selectează ambele conturi.");
+                        return;
+                    }
+
+                    int idSursa = Integer.parseInt(contSursaBox.getSelectedItem().toString().split(" ")[0]);
+                    int idDest = Integer.parseInt(contDestBox.getSelectedItem().toString().split(" ")[0]);
+
+                    if (idSursa == idDest) {
+                        JOptionPane.showMessageDialog(this, "Nu poți transfera între același cont!");
+                        return;
+                    }
+
+                    ContBancar sursa = banca.getConturi().get(idSursa);
+                    ContBancar destinatie = banca.getConturi().get(idDest);
+
+                    double suma = Double.parseDouble(sumaField.getText().trim());
+                    if (suma <= 0) {
+                        JOptionPane.showMessageDialog(this, "Introdu o sumă validă!");
+                        return;
+                    }
+
+                    String valutaSelectata = (String) valutaBox.getSelectedItem();
+                    double comision = suma * 0.02; // 2% comision
+                    double sumaNet = suma - comision;
+                    double sumaFinala = sumaNet;
+
+                    if (!sursa.getValuta().equals(destinatie.getValuta())) {
+                        double convertita = CursValutarService.convert(sumaNet, sursa.getValuta(), destinatie.getValuta());
+
+                        int confirm = JOptionPane.showConfirmDialog(this,
+                                String.format("""
+                            Valutele conturilor sunt diferite!
+                            Suma transferată: %.2f %s
+                            Comision: %.2f %s
+                            Echivalent în contul destinație: %.2f %s
+                            
+                            Dorești să continui?
+                            """,
+                                        suma, sursa.getValuta(),
+                                        comision, sursa.getValuta(),
+                                        convertita, destinatie.getValuta()),
+                                "Conversie valutară",
+                                JOptionPane.OK_CANCEL_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+
+                        if (confirm != JOptionPane.OK_OPTION) return;
+                        sumaFinala = convertita;
+                    }
+
+                    if (sursa.getSold() < suma) {
+                        JOptionPane.showMessageDialog(this, "Fonduri insuficiente în contul sursă!");
+                        return;
+                    }
+
+                    // Actualizare solduri
+                    sursa.setSold(sursa.getSold() - suma);
+                    destinatie.setSold(destinatie.getSold() + sumaFinala);
+
+                    // Log tranzacție
+                    Tranzactie tranz = new Tranzactie(
+                            new Random().nextInt(999999),
+                            sursa,
+                            destinatie,
+                            suma,
+                            "TRANSFER"
+                    );
+
+                    banca.adaugaTranzactie(tranz);
+                    banca.salveazaDate();
+
+                    JOptionPane.showMessageDialog(this, "Transfer efectuat cu succes!");
+                    actualizeazaConturi();
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Eroare la transfer: " + ex.getMessage());
+                }
+            });
+
+            contentPanel.revalidate();
+            contentPanel.repaint();
+        });
+
+
+
         panel.add(splitPane, BorderLayout.CENTER);
         return panel;
     }
@@ -332,4 +469,78 @@ public class ClientFrame extends JFrame {
         panel.add(refreshBtn, BorderLayout.SOUTH);
         return panel;
     }
+
+    private JPanel creeazaPanelTranzactii() {
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Dropdown pentru filtrare după conturile clientului logat
+        JComboBox<String> conturiClientBox = new JComboBox<>();
+        conturiClientBox.addItem("Toate conturile"); // opțiune implicită
+
+        for (ContBancar c : banca.getConturi().values()) {
+            if (c.getClient().getId() == client.getId()) {
+                conturiClientBox.addItem(c.getId() + " - " + c.getClass().getSimpleName() + " (" + c.getValuta() + ")");
+            }
+        }
+
+        // Modelul tabelului
+        String[] coloane = {"ID", "Sursa", "Destinatie", "Suma", "Tip", "Data"};
+        DefaultTableModel model = new DefaultTableModel(coloane, 0);
+        JTable tabela = new JTable(model);
+        tabela.setRowHeight(25);
+
+        JScrollPane scrollPane = new JScrollPane(tabela);
+
+        // Panou sus pentru filtrare
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topPanel.add(new JLabel("Alege contul:"));
+        topPanel.add(conturiClientBox);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Funcție internă pentru actualizarea tabelului
+        Runnable actualizeazaTabel = () -> {
+            model.setRowCount(0);
+            String selectie = (String) conturiClientBox.getSelectedItem();
+
+            for (Tranzactie t : banca.getTranzactii()) {
+                // Dacă e "Toate conturile", le afișăm pe toate
+                if (selectie.equals("Toate conturile")) {
+                    model.addRow(new Object[]{
+                            t.getId(),
+                            t.getSursa().getClient().getNume() + " (" + t.getSursa().getId() + ")",
+                            t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
+                            String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
+                            t.getTip(),
+                            t.getData()
+                    });
+                    continue;
+                }
+
+                // Extragem ID-ul contului selectat
+                int contIdSelectat = Integer.parseInt(selectie.split(" ")[0]);
+                if (t.getSursa().getId() == contIdSelectat || t.getDestinatie().getId() == contIdSelectat) {
+                    model.addRow(new Object[]{
+                            t.getId(),
+                            t.getSursa().getClient().getNume() + " (" + t.getSursa().getId() + ")",
+                            t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
+                            String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
+                            t.getTip(),
+                            t.getData()
+                    });
+                }
+            }
+        };
+
+        // Populăm inițial tabelul
+        actualizeazaTabel.run();
+
+        // Eveniment: schimbarea selecției din dropdown
+        conturiClientBox.addActionListener((ActionEvent e) -> actualizeazaTabel.run());
+
+        return panel;
+    }
+
+
 }

@@ -3,6 +3,9 @@ package service;
 
 import exceptions.DateInvalideException;
 import model.*;
+
+import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -18,11 +21,14 @@ public class Banca {
     public Banca() {
         clienti = FileManager.incarcaClienti();
         conturi = FileManager.incarcaConturi(clienti);
-        //tranzactii = FileManager.incarcaTranzactii(); // optional, daca exista
+        tranzactii = FileManager.incarcaTranzactii(conturi);
         // calculeaza next ids pe baza datelor incarcate
         for (Client c : clienti) nextClientId = Math.max(nextClientId, c.getId() + 1);
         for (Integer id : conturi.keySet()) nextContId = Math.max(nextContId, id + 1);
+
+        System.out.println("Incarcat tranzactii: " + tranzactii.size());
     }
+
 
     /**
      * Autentifica un client dupa email si parola.
@@ -114,9 +120,21 @@ public class Banca {
     public ArrayList<Client> getClienti() { return clienti; }
     public HashMap<Integer, ContBancar> getConturi() { return conturi; }
 
+    public void adaugaTranzactie(Tranzactie t) {
+        tranzactii.add(t);
+        FileManager.salveazaTranzactii(tranzactii);
+    }
+
+    public ArrayList<Tranzactie> getTranzactii() {
+        return tranzactii;
+    }
+
+
+
+
     public void salveazaDate() {
         FileManager.salveazaClienti(clienti);
         FileManager.salveazaConturi(conturi);
-        // eventual: FileManager.salveazaTranzactii(tranzactii)
+        FileManager.salveazaTranzactii(tranzactii);
     }
 }

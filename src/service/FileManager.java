@@ -3,8 +3,11 @@ package service;
 import model.*;
 
 import java.io.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
 
 public class FileManager {
 
@@ -90,6 +93,56 @@ public class FileManager {
             }
         } catch (IOException e) {
             System.out.println(" Eroare la scrierea fișierului conturi.txt: " + e.getMessage());
+        }
+    }
+
+
+    public static ArrayList<Tranzactie> incarcaTranzactii(HashMap<Integer, ContBancar> conturi) {
+        ArrayList<Tranzactie> tranzactii = new ArrayList<>();
+        File file = new File(TRANZACTII_FILE);
+        if (!file.exists()) return tranzactii;
+
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine().trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split(";");
+                if (parts.length < 6) continue;
+
+                int id = Integer.parseInt(parts[0]);
+                int idSursa = Integer.parseInt(parts[1]);
+                int idDest = Integer.parseInt(parts[2]);
+                double suma = Double.parseDouble(parts[3]);
+                String tip = parts[4];
+                LocalDateTime data = LocalDateTime.parse(parts[5]);
+
+                ContBancar sursa = conturi.get(idSursa);
+                ContBancar destinatie = conturi.get(idDest);
+
+                if (sursa != null && destinatie != null) {
+                    tranzactii.add(new Tranzactie(id, sursa, destinatie, suma, tip));
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return tranzactii;
+    }
+
+
+    public static void salveazaTranzactii(List<Tranzactie> tranzactii) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(TRANZACTII_FILE))) {
+            for (Tranzactie t : tranzactii) {
+                pw.println(t.getId() + ";" +
+                        t.getSursa().getId() + ";" +
+                        t.getDestinatie().getId() + ";" +
+                        t.getSuma() + ";" +
+                        t.getTip() + ";" +
+                        t.getData());
+            }
+        } catch (Exception e) {
+            System.out.println("Eroare la salvarea tranzactiilor: " + e.getMessage());
         }
     }
 }
