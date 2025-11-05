@@ -6,7 +6,14 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.time.format.DateTimeFormatter;
 import java.util.Random;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot;
+import org.jfree.data.general.DefaultPieDataset;
+import java.text.DecimalFormat;
 
 /**
  * Interfata GUI pentru un client logat.
@@ -20,6 +27,7 @@ public class ClientFrame extends JFrame {
 
     // COMISION general pentru operațiuni (poți modifica aici)
     private static final double COMISION_PROCENT = 0.02; // 2%
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     public ClientFrame(Banca banca, Client client) {
         this.banca = banca;
@@ -444,30 +452,165 @@ public class ClientFrame extends JFrame {
     }
 
     // ==================== Panel Statistici ====================
+//    private JPanel creeazaPanelStatistici() {
+//        JPanel panel = new JPanel(new BorderLayout());
+//        JTextArea statsArea = new JTextArea();
+//        statsArea.setEditable(false);
+//        panel.add(new JScrollPane(statsArea), BorderLayout.CENTER);
+//
+//        JButton refreshBtn = new JButton("Refresh");
+//        refreshBtn.addActionListener(e -> {
+//            double total = 0, curent = 0, economii = 0, credit = 0;
+//            for (ContBancar c : banca.getConturi().values()) {
+//                if (c.getClient().getId() == client.getId()) {
+//                    total += c.getSold();
+//                    if (c instanceof ContCurent) curent += c.getSold();
+//                    else if (c instanceof ContEconomii) economii += c.getSold();
+//                    else if (c instanceof ContCredit) credit += c.getSold();
+//                }
+//            }
+//            statsArea.setText(String.format(
+//                    "Sold total: %.2f%nCont Curent: %.2f%nCont Economii: %.2f%nCont Credit: %.2f",
+//                    total, curent, economii, credit));
+//        });
+//
+//        panel.add(refreshBtn, BorderLayout.SOUTH);
+//        return panel;
+//    }
+
+
+
+// Înlocuiește metoda creeazaPanelStatistici() cu aceasta:
+
     private JPanel creeazaPanelStatistici() {
         JPanel panel = new JPanel(new BorderLayout());
+
+        // Panel pentru grafic
+        JPanel chartPanel = new JPanel(new BorderLayout());
+
+        // Panel pentru statistici text
         JTextArea statsArea = new JTextArea();
         statsArea.setEditable(false);
-        panel.add(new JScrollPane(statsArea), BorderLayout.CENTER);
+        statsArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane scrollPane = new JScrollPane(statsArea);
+        scrollPane.setPreferredSize(new Dimension(200, 0));
+
+        // Split panel între grafic și text
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, chartPanel, scrollPane);
+        splitPane.setDividerLocation(400);
+        splitPane.setResizeWeight(0.7);
+
+        panel.add(splitPane, BorderLayout.CENTER);
 
         JButton refreshBtn = new JButton("Refresh");
-        refreshBtn.addActionListener(e -> {
-            double total = 0, curent = 0, economii = 0, credit = 0;
-            for (ContBancar c : banca.getConturi().values()) {
-                if (c.getClient().getId() == client.getId()) {
-                    total += c.getSold();
-                    if (c instanceof ContCurent) curent += c.getSold();
-                    else if (c instanceof ContEconomii) economii += c.getSold();
-                    else if (c instanceof ContCredit) credit += c.getSold();
-                }
-            }
-            statsArea.setText(String.format(
-                    "Sold total: %.2f%nCont Curent: %.2f%nCont Economii: %.2f%nCont Credit: %.2f",
-                    total, curent, economii, credit));
-        });
+        refreshBtn.addActionListener(e -> actualizeazaStatistici(chartPanel, statsArea));
 
         panel.add(refreshBtn, BorderLayout.SOUTH);
+
+        // Actualizare inițială
+        actualizeazaStatistici(chartPanel, statsArea);
+
         return panel;
+    }
+
+    private void actualizeazaStatistici(JPanel chartPanel, JTextArea statsArea) {
+        double total = 0, curent = 0, economii = 0, credit = 0;
+        int nrCurent = 0, nrEconomii = 0, nrCredit = 0;
+
+        for (ContBancar c : banca.getConturi().values()) {
+            if (c.getClient().getId() == client.getId()) {
+                double sold = c.getSold();
+                total += sold;
+
+                if (c instanceof ContCurent) {
+                    curent += sold;
+                    nrCurent++;
+                } else if (c instanceof ContEconomii) {
+                    economii += sold;
+                    nrEconomii++;
+                } else if (c instanceof ContCredit) {
+                    credit += sold;
+                    nrCredit++;
+                }
+            }
+        }
+
+        // Actualizare text statistici
+        StringBuilder stats = new StringBuilder();
+        stats.append("═══════════════════════════\n");
+        stats.append("     STATISTICI CONTURI\n");
+        stats.append("═══════════════════════════\n\n");
+        stats.append(String.format("💰 SOLD TOTAL: %.2f RON\n\n", total));
+        stats.append("───────────────────────────\n");
+        stats.append(String.format("🏦 Conturi Curente (%d):\n", nrCurent));
+        stats.append(String.format("   %.2f RON (%.1f%%)\n\n", curent, total > 0 ? (curent/total)*100 : 0));
+        stats.append(String.format("🐷 Conturi Economii (%d):\n", nrEconomii));
+        stats.append(String.format("   %.2f RON (%.1f%%)\n\n", economii, total > 0 ? (economii/total)*100 : 0));
+        stats.append(String.format("💳 Conturi Credit (%d):\n", nrCredit));
+        stats.append(String.format("   %.2f RON (%.1f%%)\n", credit, total > 0 ? (credit/total)*100 : 0));
+        stats.append("───────────────────────────\n");
+
+        statsArea.setText(stats.toString());
+
+        // Creare dataset pentru pie chart
+        DefaultPieDataset dataset = new DefaultPieDataset();
+
+        if (curent > 0) dataset.setValue("Cont Curent", curent);
+        if (economii > 0) dataset.setValue("Cont Economii", economii);
+        if (credit > 0) dataset.setValue("Cont Credit", credit);
+
+        // Creare pie chart
+        JFreeChart chart = ChartFactory.createPieChart(
+                "Distribuția Soldurilor",
+                dataset,
+                true,  // legend
+                true,  // tooltips
+                false  // urls
+        );
+
+        // Personalizare aspect grafic
+        chart.setBackgroundPaint(new Color(245, 245, 245));
+
+        PiePlot plot = (PiePlot) chart.getPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setOutlineVisible(false);
+        plot.setShadowPaint(null);
+
+        // Culori personalizate pentru fiecare tip de cont
+        plot.setSectionPaint("Cont Curent", new Color(52, 152, 219));      // Albastru
+        plot.setSectionPaint("Cont Economii", new Color(46, 204, 113));    // Verde
+        plot.setSectionPaint("Cont Credit", new Color(231, 76, 60));       // Roșu
+
+        // Stil pentru labels
+        plot.setLabelFont(new Font("SansSerif", Font.BOLD, 12));
+        plot.setLabelBackgroundPaint(new Color(255, 255, 255, 200));
+        plot.setLabelOutlinePaint(null);
+        plot.setLabelShadowPaint(null);
+
+        // Format pentru labels cu procent și sumă
+        plot.setLabelGenerator(new org.jfree.chart.labels.StandardPieSectionLabelGenerator(
+                "{0}: {2} ({1})",
+                new DecimalFormat("#,##0.00"),
+                new DecimalFormat("0.0%")
+        ));
+
+        // Distanță între secțiuni pentru efect 3D ușor
+        plot.setExplodePercent("Cont Curent", 0.02);
+        plot.setExplodePercent("Cont Economii", 0.02);
+        plot.setExplodePercent("Cont Credit", 0.02);
+
+        // Stil pentru legendă
+        chart.getLegend().setBackgroundPaint(new Color(255, 255, 255, 200));
+        chart.getLegend().setFrame(new org.jfree.chart.block.BlockBorder(Color.LIGHT_GRAY));
+
+        // Adăugare în panel
+        chartPanel.removeAll();
+        ChartPanel cp = new ChartPanel(chart);
+        cp.setPreferredSize(new Dimension(400, 400));
+        cp.setMouseWheelEnabled(true);
+        chartPanel.add(cp, BorderLayout.CENTER);
+        chartPanel.revalidate();
+        chartPanel.repaint();
     }
 
     private JPanel creeazaPanelTranzactii() {
@@ -513,10 +656,12 @@ public class ClientFrame extends JFrame {
                             t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
                             String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
                             t.getTip(),
-                            t.getData()
+                            t.getData().format(formatter)
                     });
                     continue;
                 }
+
+
 
                 // Extragem ID-ul contului selectat
                 int contIdSelectat = Integer.parseInt(selectie.split(" ")[0]);
@@ -527,7 +672,7 @@ public class ClientFrame extends JFrame {
                             t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
                             String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
                             t.getTip(),
-                            t.getData()
+                            t.getData().format(formatter)
                     });
                 }
             }

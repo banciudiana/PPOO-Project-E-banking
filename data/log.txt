@@ -36,3 +36,9 @@
 2025-11-05 10:41:36 - Utilizator autentificat GUI: diana.banciu@com
 2025-11-05 10:45:13 - LOGIN reusit pentru: diana.banciu@com
 2025-11-05 10:45:13 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-05 13:13:13 - LOGIN reusit pentru: diana.banciu@com
+2025-11-05 13:13:13 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-05 13:14:56 - LOGIN reusit pentru: diana.banciu@com
+2025-11-05 13:14:56 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-05 13:26:49 - LOGIN reusit pentru: diana.banciu@com
+2025-11-05 13:26:49 - Utilizator autentificat GUI: diana.banciu@com
