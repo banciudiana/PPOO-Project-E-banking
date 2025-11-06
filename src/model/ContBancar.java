@@ -1,34 +1,42 @@
 package model;
 
+import java.time.LocalDateTime;
+
 public abstract class ContBancar {
     protected int id;
     protected double sold;
     protected Client client;
     protected  String valuta;
+    protected LocalDateTime creationDate;
 
-    public ContBancar(int id, double sold, Client client, String valuta) {
+    public ContBancar(int id, double sold, Client client, String valuta, LocalDateTime creationDate) {
         this.id = id;
         this.sold = sold;
         this.client = client;
         this.valuta = valuta;
+        this.creationDate = creationDate;
     }
 
-    public abstract  void retrage( double suma) throws Exception;
-    public abstract  void depune( double suma );
+    public ContBancar(int id, double sold, Client client, String valuta) {
+        this(id, sold, client, valuta, LocalDateTime.now());
+    }
+
+    public abstract void retrage(double suma) throws Exception;
+    public abstract void depune(double suma);
 
     public double getSold() { return sold; }
-
-    public void setSold(double sold) {
-        this.sold = sold;
-    }
-
+    public void setSold(double sold) { this.sold = sold; }
     public int getId() { return id; }
     public Client getClient() { return client; }
     public String getValuta() { return valuta; }
+    public LocalDateTime getCreationDate() { return creationDate; }
+    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
 
     @Override
     public String toString() {
-        return "Cont ID: " + id + " | Sold: " + sold + " " + valuta + " | Client: " + client.getNume();
+        return "Cont ID: " + id + " | Sold: " + sold + " " + valuta + " | Client: " + client.getNume()
+                + " | Creat: " + creationDate.toLocalDate().toString();
     }
-
 }
+
+

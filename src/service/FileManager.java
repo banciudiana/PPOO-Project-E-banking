@@ -64,18 +64,34 @@ public class FileManager {
                     String valuta = c[3];
                     String tip = c[4];
 
-                    Client client = clienti.stream().filter(cl -> cl.getId() == idClient).findFirst().orElse(null);
-                    ContBancar cont = null;
+                    LocalDateTime creationDate = LocalDateTime.now();
+                    if (c.length > 5 && !c[5].isEmpty()) {
+                        creationDate = LocalDateTime.parse(c[5]);
+                    }
 
-                    if ("CURENT".equalsIgnoreCase(tip))
-                        cont = new ContCurent(id, sold, client, valuta);
-                    else if ("ECONOMII".equalsIgnoreCase(tip))
-                        cont = new ContEconomii(id, sold, client, valuta);
-                    else if ("CREDIT".equalsIgnoreCase(tip))
-                        cont = new ContCredit(id, sold, client, valuta);
+                    ContBancar cont = null;
+                    Client client = clienti.stream().filter(cl -> cl.getId() == idClient).findFirst().orElse(null);
+
+                    if ("CURENT".equalsIgnoreCase(tip)) {
+                        cont = new ContCurent(id, sold, client, valuta, creationDate);
+                    } else if ("ECONOMII".equalsIgnoreCase(tip)) {
+                        // citim tipEconomii si dobandaAcumulata
+                        ContEconomii.TipEconomii tipEconomii = ContEconomii.TipEconomii.ECONOMII;
+                        double dobandaAcumulata = 0.0;
+                        if (c.length > 6 && c[6] != null && !c[6].isEmpty()) {
+                            tipEconomii = ContEconomii.TipEconomii.valueOf(c[6]);
+                        }
+                        if (c.length > 7 && c[7] != null && !c[7].isEmpty()) {
+                            dobandaAcumulata = Double.parseDouble(c[7]);
+                        }
+                        cont = new ContEconomii(id, sold, client, valuta, creationDate, tipEconomii, dobandaAcumulata);
+                    } else if ("CREDIT".equalsIgnoreCase(tip)) {
+                        cont = new ContCredit(id, sold, client, valuta, creationDate);
+                    }
 
                     if (cont != null) conturi.put(id, cont);
                 }
+
             }
         } catch (IOException e) {
             System.out.println("️ Eroare la citirea fișierului conturi.txt: " + e.getMessage());
@@ -89,8 +105,21 @@ public class FileManager {
             for (ContBancar c : conturi.values()) {
                 String tip = c instanceof ContCurent ? "CURENT"
                         : c instanceof ContEconomii ? "ECONOMII" : "CREDIT";
-                pw.println(c.getId() + ";" + c.getSold() + ";" + c.getClient().getId() + ";" + c.getValuta() + ";" + tip);
+
+                String creation = c.getCreationDate().toString();
+
+                if (c instanceof ContEconomii) {
+                    ContEconomii ce = (ContEconomii) c;
+                    pw.println(c.getId() + ";" + c.getSold() + ";" + c.getClient().getId() + ";" +
+                            c.getValuta() + ";" + tip + ";" + creation + ";" +
+                            ce.getTip().name() + ";" + ce.getDobandaAcumulata());
+                } else {
+                    // scriem liniile cu câmpuri goale pentru compatibilitate
+                    pw.println(c.getId() + ";" + c.getSold() + ";" + c.getClient().getId() + ";" +
+                            c.getValuta() + ";" + tip + ";" + creation + ";;0.0");
+                }
             }
+
         } catch (IOException e) {
             System.out.println(" Eroare la scrierea fișierului conturi.txt: " + e.getMessage());
         }

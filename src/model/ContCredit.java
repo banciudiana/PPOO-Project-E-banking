@@ -1,13 +1,20 @@
 package model;
 
+import java.time.LocalDateTime;
+
 public class ContCredit extends  ContBancar{
 
     private static final double LIMITA_CREDIT = -5000;
     private static final double DOBANDA = 0.1;
 
+    public ContCredit(int id, double sold, Client client, String valuta, LocalDateTime creationDate) {
+        super(id, sold, client, valuta, creationDate);
+    }
+
     public ContCredit(int id, double sold, Client client, String valuta) {
         super(id, sold, client, valuta);
     }
+
 
     @Override
     public void retrage(double suma) throws Exception {

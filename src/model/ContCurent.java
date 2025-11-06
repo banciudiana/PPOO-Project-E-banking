@@ -1,5 +1,7 @@
 package model;
 
+import java.time.LocalDateTime;
+
 /**
  * Clasă derivată din ContBancar care modelează un cont curent.
  * Are comision fix pentru fiecare retragere.
@@ -7,6 +9,14 @@ package model;
 
 public class ContCurent extends ContBancar {
     private static final double COMISION = 2.5;
+
+    public ContCurent(int id, double sold, Client client, String valuta, LocalDateTime creationDate) {
+        super(id, sold, client, valuta, creationDate);
+    }
+
+    public ContCurent(int id, double sold, Client client, String valuta) {
+        super(id, sold, client, valuta);
+    }
 
     /**
      * Creează un cont curent.
@@ -17,9 +27,7 @@ public class ContCurent extends ContBancar {
      * @param valuta  moneda contului
      */
 
-    public ContCurent(int id, double sold, Client client, String valuta) {
-        super(id, sold, client, valuta);
-    }
+
 
     /**
      * Retrage o sumă din cont, aplicând comisionul fix.

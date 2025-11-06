@@ -1,10 +1,8 @@
-
 package service;
 
 import exceptions.DateInvalideException;
 import model.*;
 
-import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -19,16 +17,17 @@ public class Banca {
     private int nextContId = 1000;
 
     public Banca() {
+        CursValutarService.incarcaCursuri();
         clienti = FileManager.incarcaClienti();
         conturi = FileManager.incarcaConturi(clienti);
         tranzactii = FileManager.incarcaTranzactii(conturi);
+
         // calculeaza next ids pe baza datelor incarcate
         for (Client c : clienti) nextClientId = Math.max(nextClientId, c.getId() + 1);
         for (Integer id : conturi.keySet()) nextContId = Math.max(nextContId, id + 1);
 
         System.out.println("Incarcat tranzactii: " + tranzactii.size());
     }
-
 
     /**
      * Autentifica un client dupa email si parola.
@@ -47,55 +46,46 @@ public class Banca {
 
     /**
      * Creaza un client nou si optional un cont initial de tipul specificat.
-     * @param nume
-     * @param email
-     * @param parola
-
-     * @param valuta valuta initiala (ex: "RON" sau "EUR")
-     * @param soldInitial sold initial pentru cont (0 daca nu se doreste)
-     * @return client creat
      */
-
-
     public Client creeazaClientSiCont(String nume, String email, String parola,
                                       String tipCont, String valuta, double soldInitial) throws DateInvalideException {
-        // 1. verificam daca exista deja client cu acelasi email
+        // verificam daca exista deja client cu acelasi email
         for (Client c : clienti) {
             if (c.getEmail().equalsIgnoreCase(email)) {
                 throw new DateInvalideException("Exista deja un cont asociat acestui email.");
             }
         }
 
-        // 2. creare client
-        int idClient = clienti.size() + 1;
+        // creare client
+        int idClient = nextClientId++;
         Client client = new Client(idClient, nume, email, parola, false);
         clienti.add(client);
 
-        // 3. creare cont
-        int idCont = conturi.size() + 1;
+        // creare cont
+        int idCont = nextContId++;
         ContBancar cont;
-
-        if (tipCont.equalsIgnoreCase("ECONOMII")) {
-            cont = new ContEconomii(idCont,  soldInitial, client, valuta); // 3% dobanda
-        } else if (tipCont.equalsIgnoreCase("CREDIT")) {
-            cont = new ContCredit(idCont,  soldInitial, client, valuta); // 7% rata dobanda
+        if ("ECONOMII".equalsIgnoreCase(tipCont)) {
+            // folosim tip implicit ECONOMII pentru înregistrare nouă
+            cont = new ContEconomii(idCont, soldInitial, client, valuta,
+                    LocalDateTime.now(), ContEconomii.TipEconomii.ECONOMII, 0.0);
+        } else if ("CREDIT".equalsIgnoreCase(tipCont)) {
+            cont = new ContCredit(idCont, soldInitial, client, valuta);
         } else {
-            cont = new ContCurent(idCont,  soldInitial, client, valuta);
+            cont = new ContCurent(idCont, soldInitial, client, valuta);
         }
+
+
 
         conturi.put(idCont, cont);
 
-        // 4. salvam datele imediat
+        // salvam datele imediat
         salveazaDate();
 
-        // 5. audit
+        // audit
         AuditService.log("Creare client nou (GUI): " + email + " | tip=" + tipCont + " | valuta=" + valuta);
 
         return client;
     }
-
-
-
 
     /**
      * Creaza un cont pentru un client existent (nu salveaza automat).
@@ -106,15 +96,45 @@ public class Banca {
         if ("CURENT".equalsIgnoreCase(tip)) {
             cont = new ContCurent(id, soldInitial, client, valuta);
         } else if ("ECONOMII".equalsIgnoreCase(tip)) {
-            cont = new ContEconomii(id, soldInitial, client, valuta);
+            // folosim tip implicit ECONOMII cu data curentă
+            cont = new ContEconomii(id, soldInitial, client, valuta,
+                    LocalDateTime.now(), ContEconomii.TipEconomii.ECONOMII, 0.0);
         } else if ("CREDIT".equalsIgnoreCase(tip)) {
             cont = new ContCredit(id, soldInitial, client, valuta);
         } else {
-            // default -> cont curent
             cont = new ContCurent(id, soldInitial, client, valuta);
         }
         conturi.put(id, cont);
         return cont;
+    }
+
+    /**
+     * Creaza un cont de economii pentru un client existent, cu tip specific.
+     */
+    public ContEconomii creaContEconomiiPentruClient(Client client, double soldInitial,
+                                                     String valuta, String tipEconomii) {
+        int id = nextContId++;
+        ContEconomii.TipEconomii tip = tipEconomii.equalsIgnoreCase("BONUS")
+                ? ContEconomii.TipEconomii.BONUS
+                : ContEconomii.TipEconomii.ECONOMII;
+
+        ContEconomii cont = new ContEconomii(id, soldInitial, client, valuta,
+                LocalDateTime.now(), tip, 0.0);
+        conturi.put(id, cont);
+        return cont;
+    }
+
+    /**
+     * Aplica dobanda lunara pentru toate conturile de economii.
+     */
+    public void aplicaDobandaLunaraPentruToateConturile() {
+        for (ContBancar c : conturi.values()) {
+            if (c instanceof ContEconomii) {
+                ContEconomii ce = (ContEconomii) c;
+                ce.aplicaDobandaLunara();
+            }
+        }
+        salveazaDate();
     }
 
     public ArrayList<Client> getClienti() { return clienti; }
@@ -129,12 +149,45 @@ public class Banca {
         return tranzactii;
     }
 
-
-
-
     public void salveazaDate() {
         FileManager.salveazaClienti(clienti);
         FileManager.salveazaConturi(conturi);
         FileManager.salveazaTranzactii(tranzactii);
+    }
+
+    /**
+     * Gaseste toate conturile unui client.
+     */
+    public List<ContBancar> getConturiClient(Client client) {
+        List<ContBancar> lista = new ArrayList<>();
+        for (ContBancar c : conturi.values()) {
+            if (c.getClient().getId() == client.getId()) {
+                lista.add(c);
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Executa retragere cu reguli speciale pentru conturile BONUS.
+     */
+    public void retrage(Client client, int contId, double suma) throws Exception {
+        ContBancar cont = conturi.get(contId);
+        if (cont == null || cont.getClient().getId() != client.getId()) {
+            throw new Exception("Cont inexistent sau nu apartine clientului.");
+        }
+
+        if (cont instanceof ContEconomii) {
+            ContEconomii ce = (ContEconomii) cont;
+            if (ce.getTip() == ContEconomii.TipEconomii.BONUS
+                    && ce.calculeazaLuniDeLaCreare() < 4) {
+                // arunca exceptie pentru UI care va cere confirmare
+                throw new exceptions.RetragereInainteDePerioadaException(
+                        "Retragere inainte de 4 luni: pierzi dobanda acumulata.");
+            }
+        }
+
+        cont.retrage(suma);
+        salveazaDate();
     }
 }
