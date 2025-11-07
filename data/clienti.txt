@@ -1,5 +1,1 @@
-1;Ion Popescu;ion.popescu@gmail.com;1234;false
-2;Maria Ionescu;maria.ionescu@gmail.com;abcd;false
-3;Costel;costel@yahoo.com;12345;false
-4;diana;diana.banciu@com;123456;false
-5;Ana;ana.elena@gmail.com;1234;false
+1;Ana;anaioana@gmail.com;1234

@@ -1,73 +1,86 @@
 package model;
 
 /**
- * Reprezintă un client al băncii.
- * Conține informații personale, parola, scorul de fidelitate și rolul (client/admin).
+ * Clasa {@code Client} reprezinta un client al bancii.
+ * <p>
+ * Contine informatii personale precum identificatorul unic, numele complet, adresa de email si parola.
+ * </p>
+ *
+ * @author
  */
-
 public class Client {
 
+    /** Identificatorul unic al clientului. */
     private int id;
-    private String nume;
-    private String email;
-    private String parola;
-    private int scor;
-    private boolean esteAdmin;
 
+    /** Numele  clientului */
+    private String nume;
+
+    /** Adresa de email  */
+    private String email;
+
+    /** Parola  */
+    private String parola;
 
     /**
-     * Creează un nou client.
+     * Creeaza un nou obiect {@code Client} cu datele specificate.
      *
-     * @param id         identificatorul unic al clientului
-     * @param nume       numele complet
-     * @param email      adresa de email
-     * @param parola     parola de autentificare
-     * @param esteAdmin  true dacă este administrator
+     * @param id     identificatorul unic al clientului
+     * @param nume   numele clientului
+     * @param email  adresa de email
+     * @param parola parola folosita pentru autentificare
      */
-
-    public Client(int id, String nume, String email, String parola, boolean esteAdmin) {
+    public Client(int id, String nume, String email, String parola) {
         this.id = id;
         this.nume = nume;
         this.email = email;
         this.parola = parola;
-        this.scor = 0;
-        this.esteAdmin = esteAdmin;
     }
 
+    /**
+     * Returneaza identificatorul unic al clientului.
+     *
+     * @return id-ul clientului
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * Returneaza numele clientului.
+     *
+     * @return numele clientului
+     */
     public String getNume() {
         return nume;
     }
 
+    /**
+     * Returneaza adresa de email a clientului.
+     *
+     * @return adresa de email
+     */
     public String getEmail() {
         return email;
     }
 
+    /**
+     * Returneaza parola clientului.
+     *
+     * @return parola clientului
+     */
     public String getParola() {
         return parola;
     }
 
-    public int getScor() {
-        return scor;
-    }
-
-    public boolean esteAdmin() {
-        return esteAdmin;
-    }
-
     /**
-     * Actualizează scorul de fidelitate.
+     * Returneaza o reprezentare textuala a obiectului {@code Client}.
+     * Format: "id | nume | email"
      *
-     * @param modificare valoarea cu care se modifică scorul (poate fi negativă)
+     * @return un sir de caractere care reprezinta clientul
      */
-
-    public void actualizeazaScor(int modificare) { scor += modificare; }
-
     @Override
     public String toString() {
-        return id + " | " + nume + " | " + email + " | scor: " + scor + (esteAdmin ? " [ADMIN]" : "");
+        return id + " | " + nume + " | " + email;
     }
 }

@@ -793,8 +793,8 @@ public class ClientFrame extends JFrame {
                             new Random().nextInt(999999),
                             sursa,
                             destinatie,
-                            sumaInValutaSursa,  // Suma fără comision, în valuta sursei
-                            "TRANSFER"
+                            sumaInValutaSursa
+
                     );
 
                     banca.adaugaTranzactie(tranz);
@@ -992,7 +992,6 @@ public class ClientFrame extends JFrame {
                             t.getSursa().getClient().getNume() + " (" + t.getSursa().getId() + ")",
                             t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
                             String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
-                            t.getTip(),
                             t.getData().format(formatter)
                     });
                     continue;
@@ -1008,7 +1007,6 @@ public class ClientFrame extends JFrame {
                             t.getSursa().getClient().getNume() + " (" + t.getSursa().getId() + ")",
                             t.getDestinatie().getClient().getNume() + " (" + t.getDestinatie().getId() + ")",
                             String.format("%.2f %s", t.getSuma(), t.getSursa().getValuta()),
-                            t.getTip(),
                             t.getData().format(formatter)
                     });
                 }

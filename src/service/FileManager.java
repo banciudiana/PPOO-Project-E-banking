@@ -28,8 +28,8 @@ public class FileManager {
                             Integer.parseInt(c[0]),
                             c[1],
                             c[2],
-                            c[3],
-                            Boolean.parseBoolean(c[4])
+                            c[3]
+
                     );
                     clienti.add(cl);
                 }
@@ -44,7 +44,7 @@ public class FileManager {
     public static void salveazaClienti(ArrayList<Client> clienti) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(CLIENTI_FILE))) {
             for (Client c : clienti) {
-                pw.println(c.getId() + ";" + c.getNume() + ";" + c.getEmail() + ";" + c.getParola() + ";" + c.esteAdmin());
+                pw.println(c.getId() + ";" + c.getNume() + ";" + c.getEmail() + ";" + c.getParola() );
             }
         } catch (IOException e) {
             System.out.println(" Eroare la scrierea fișierului clienti.txt: " + e.getMessage());
@@ -151,7 +151,7 @@ public class FileManager {
                 ContBancar destinatie = conturi.get(idDest);
 
                 if (sursa != null && destinatie != null) {
-                    tranzactii.add(new Tranzactie(id, sursa, destinatie, suma, tip));
+                    tranzactii.add(new Tranzactie(id, sursa, destinatie, suma));
                 }
             }
         } catch (Exception e) {
@@ -168,7 +168,6 @@ public class FileManager {
                         t.getSursa().getId() + ";" +
                         t.getDestinatie().getId() + ";" +
                         t.getSuma() + ";" +
-                        t.getTip() + ";" +
                         t.getData());
             }
         } catch (Exception e) {

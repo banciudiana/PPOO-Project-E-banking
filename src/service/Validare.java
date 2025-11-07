@@ -13,8 +13,5 @@ public class Validare {
             throw new DateInvalideException("Parola prea scurtă!");
     }
 
-    public static void valideazaSuma(double suma) throws DateInvalideException {
-        if (suma <= 0)
-            throw new DateInvalideException("Suma trebuie să fie pozitivă!");
-    }
+
 }

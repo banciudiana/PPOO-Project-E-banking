@@ -84,3 +84,18 @@
 2025-11-07 14:21:14 - Utilizator autentificat GUI: diana.banciu@com
 2025-11-07 14:21:49 - LOGIN reusit pentru: diana.banciu@com
 2025-11-07 14:21:49 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-07 14:40:36 - LOGIN esuat pentru: diana.banciu@com
+2025-11-07 14:40:36 - Autentificare esuata GUI: diana.banciu@com
+2025-11-07 14:40:44 - LOGIN esuat pentru: diana.banciu@com
+2025-11-07 14:40:44 - Autentificare esuata GUI: diana.banciu@com
+2025-11-07 14:41:15 - LOGIN esuat pentru: diana.banciu@com
+2025-11-07 14:41:15 - Autentificare esuata GUI: diana.banciu@com
+2025-11-07 14:44:18 - LOGIN esuat pentru: dianabanciu@gmail.com
+2025-11-07 14:44:18 - Autentificare esuata GUI: dianabanciu@gmail.com
+2025-11-07 14:44:47 - Creare client nou (GUI): anaioana@gmail.com | tip=CURENT | valuta=RON
+2025-11-07 14:44:47 - Inregistrare GUI: anaioana@gmail.com
+2025-11-07 14:45:01 - LOGIN reusit pentru: anaioana@gmail.com
+2025-11-07 14:45:01 - Utilizator autentificat GUI: anaioana@gmail.com
+2025-11-07 14:45:24 - Conversie valută: Cont 1001 din EUR în RON (2000.00 → 10000.00)
+2025-11-07 14:45:29 - Conversie valută: Cont 1001 din RON în EUR (10000.00 → 1964.00)
+2025-11-07 14:45:34 - Conversie valută: Cont 1001 din EUR în RON (1964.00 → 9820.00)

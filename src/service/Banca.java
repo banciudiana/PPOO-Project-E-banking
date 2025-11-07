@@ -8,9 +8,15 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Gestioneaza logica principala (extensie cu autentificare si creare cont).
+ * Clasa {@code Banca} gestioneaza logica principala a aplicatiei.
+ * <p>
+ * Include operatii de autentificare, creare conturi, aplicare dobanzi si gestionare tranzactii.
+ * </p>
+ *
+ * @author
  */
 public class Banca {
+
     private ArrayList<Client> clienti;
     private HashMap<Integer, ContBancar> conturi;
     private ArrayList<Tranzactie> tranzactii;
@@ -23,7 +29,6 @@ public class Banca {
         conturi = FileManager.incarcaConturi(clienti);
         tranzactii = FileManager.incarcaTranzactii(conturi);
 
-        // calculeaza next ids pe baza datelor incarcate
         for (Client c : clienti) nextClientId = Math.max(nextClientId, c.getId() + 1);
         for (Integer id : conturi.keySet()) nextContId = Math.max(nextContId, id + 1);
 
@@ -31,13 +36,16 @@ public class Banca {
         if (ultimaData.isBefore(LocalDate.now().withDayOfMonth(1))) {
             aplicaDobandaLunaraPentruToateConturile();
             FileManager.salveazaUltimaDataDobanda(LocalDate.now());
+            AuditService.log("Dobanda lunara aplicata automat la pornirea aplicatiei.");
         }
 
-        System.out.println("Incarcat tranzactii: " + tranzactii.size());
+        AuditService.log("Initializare sistem Banca completata. Clienti: " + clienti.size() +
+                ", Conturi: " + conturi.size() + ", Tranzactii: " + tranzactii.size());
     }
 
     /**
      * Autentifica un client dupa email si parola.
+     *
      * @return client daca autentificarea reuseste, null altfel
      */
     public Client autentifica(String email, String parola) {
@@ -56,23 +64,21 @@ public class Banca {
      */
     public Client creeazaClientSiCont(String nume, String email, String parola,
                                       String tipCont, String valuta, double soldInitial) throws DateInvalideException {
-        // verificam daca exista deja client cu acelasi email
         for (Client c : clienti) {
             if (c.getEmail().equalsIgnoreCase(email)) {
+                AuditService.log("Eroare creare client: email deja existent (" + email + ")");
                 throw new DateInvalideException("Exista deja un cont asociat acestui email.");
             }
         }
 
-        // creare client
         int idClient = nextClientId++;
-        Client client = new Client(idClient, nume, email, parola, false);
+        Client client = new Client(idClient, nume, email, parola);
         clienti.add(client);
+        AuditService.log("Client nou creat: " + nume + " (" + email + ")");
 
-        // creare cont
         int idCont = nextContId++;
         ContBancar cont;
         if ("ECONOMII".equalsIgnoreCase(tipCont)) {
-            // folosim tip implicit ECONOMII pentru înregistrare nouă
             cont = new ContEconomii(idCont, soldInitial, client, valuta,
                     LocalDateTime.now(), ContEconomii.TipEconomii.ECONOMII, 0.0);
         } else if ("CREDIT".equalsIgnoreCase(tipCont)) {
@@ -81,21 +87,16 @@ public class Banca {
             cont = new ContCurent(idCont, soldInitial, client, valuta);
         }
 
-
-
         conturi.put(idCont, cont);
+        AuditService.log("Cont nou creat pentru client " + email + " | tip=" + tipCont +
+                " | valuta=" + valuta + " | sold initial=" + soldInitial);
 
-        // salvam datele imediat
         salveazaDate();
-
-        // audit
-        AuditService.log("Creare client nou (GUI): " + email + " | tip=" + tipCont + " | valuta=" + valuta);
-
         return client;
     }
 
     /**
-     * Creaza un cont pentru un client existent (nu salveaza automat).
+     * Creaza un cont pentru un client existent.
      */
     public ContBancar creaContPentruClient(Client client, String tip, double soldInitial, String valuta) {
         int id = nextContId++;
@@ -103,7 +104,6 @@ public class Banca {
         if ("CURENT".equalsIgnoreCase(tip)) {
             cont = new ContCurent(id, soldInitial, client, valuta);
         } else if ("ECONOMII".equalsIgnoreCase(tip)) {
-            // folosim tip implicit ECONOMII cu data curentă
             cont = new ContEconomii(id, soldInitial, client, valuta,
                     LocalDateTime.now(), ContEconomii.TipEconomii.ECONOMII, 0.0);
         } else if ("CREDIT".equalsIgnoreCase(tip)) {
@@ -112,6 +112,8 @@ public class Banca {
             cont = new ContCurent(id, soldInitial, client, valuta);
         }
         conturi.put(id, cont);
+        AuditService.log("Cont suplimentar creat pentru client: " + client.getEmail() +
+                " | tip=" + tip + " | valuta=" + valuta);
         return cont;
     }
 
@@ -128,6 +130,8 @@ public class Banca {
         ContEconomii cont = new ContEconomii(id, soldInitial, client, valuta,
                 LocalDateTime.now(), tip, 0.0);
         conturi.put(id, cont);
+        AuditService.log("Cont economii creat pentru client: " + client.getEmail() +
+                " | tip=" + tipEconomii + " | valuta=" + valuta);
         return cont;
     }
 
@@ -135,13 +139,15 @@ public class Banca {
      * Aplica dobanda lunara pentru toate conturile de economii.
      */
     public void aplicaDobandaLunaraPentruToateConturile() {
+        int nr = 0;
         for (ContBancar c : conturi.values()) {
             if (c instanceof ContEconomii) {
-                ContEconomii ce = (ContEconomii) c;
-                ce.aplicaDobandaLunara();
+                ((ContEconomii) c).aplicaDobandaLunara();
+                nr++;
             }
         }
         salveazaDate();
+        AuditService.log("Dobanda lunara aplicata pentru " + nr + " conturi de economii.");
     }
 
     public ArrayList<Client> getClienti() { return clienti; }
@@ -150,6 +156,8 @@ public class Banca {
     public void adaugaTranzactie(Tranzactie t) {
         tranzactii.add(t);
         FileManager.salveazaTranzactii(tranzactii);
+        AuditService.log("Tranzactie adaugata: " + " | suma=" + t.getSuma() +
+                " | " + t.getSursa().getClient().getNume() + " -> " + t.getDestinatie().getClient().getNume());
     }
 
     public ArrayList<Tranzactie> getTranzactii() {
@@ -160,6 +168,7 @@ public class Banca {
         FileManager.salveazaClienti(clienti);
         FileManager.salveazaConturi(conturi);
         FileManager.salveazaTranzactii(tranzactii);
+        AuditService.log("Datele au fost salvate pe disc.");
     }
 
     /**
@@ -172,10 +181,10 @@ public class Banca {
                 lista.add(c);
             }
         }
+        AuditService.log("Conturi obtinute pentru client: " + client.getEmail() +
+                " | numar conturi=" + lista.size());
         return lista;
     }
-
-
 
     /**
      * Executa retragere cu reguli speciale pentru conturile BONUS.
@@ -183,6 +192,8 @@ public class Banca {
     public void retrage(Client client, int contId, double suma) throws Exception {
         ContBancar cont = conturi.get(contId);
         if (cont == null || cont.getClient().getId() != client.getId()) {
+            AuditService.log("Eroare retragere: cont inexistent sau apartine altui client (" +
+                    client.getEmail() + ")");
             throw new Exception("Cont inexistent sau nu apartine clientului.");
         }
 
@@ -190,45 +201,49 @@ public class Banca {
             ContEconomii ce = (ContEconomii) cont;
             if (ce.getTip() == ContEconomii.TipEconomii.BONUS
                     && ce.calculeazaLuniDeLaCreare() < 4) {
-                // arunca exceptie pentru UI care va cere confirmare
+
                 throw new exceptions.RetragereInainteDePerioadaException(
                         "Retragere inainte de 4 luni: pierzi dobanda acumulata.");
             }
         }
 
         cont.retrage(suma);
+        AuditService.log("Retragere efectuata: " + suma + " " + cont.getValuta() +
+                " | cont=" + contId + " | client=" + client.getEmail());
         salveazaDate();
     }
 
-
+    /**
+     * Inchide un cont daca regulile permit acest lucru.
+     */
     public void inchideCont(int contId, int clientId) throws Exception {
         ContBancar cont = conturi.get(contId);
 
         if (cont == null) {
-            throw new Exception("Contul nu există!");
+            AuditService.log("Eroare: incercare de inchidere cont inexistent (id=" + contId + ")");
+            throw new Exception("Contul nu exista!");
         }
 
         if (cont.getClient().getId() != clientId) {
-            throw new Exception("Nu poți închide un cont care nu îți aparține!");
+            AuditService.log("Eroare: incercare de inchidere cont care nu apartine clientului (id=" + contId + ")");
+            throw new Exception("Nu poti inchide un cont care nu iti apartine!");
         }
 
-
         if (Math.abs(cont.getSold()) > 0.01) {
+            AuditService.log("Eroare inchidere cont: sold diferit de zero pentru cont " + contId);
             throw new Exception(String.format(
-                    "Contul trebuie să aibă sold 0 pentru a fi închis!\nSold curent: %.2f %s",
+                    "Contul trebuie sa aiba sold 0 pentru a fi inchis!\nSold curent: %.2f %s",
                     cont.getSold(), cont.getValuta()
             ));
         }
 
         conturi.remove(contId);
-
-
         tranzactii.removeIf(t ->
                 t.getSursa().getId() == contId || t.getDestinatie().getId() == contId
         );
 
         salveazaDate();
-
-        AuditService.log("Cont închis: " + contId + " (Client: " + cont.getClient().getNume() + ")");
+        AuditService.log("Cont inchis cu succes: " + contId + " (Client: " +
+                cont.getClient().getNume() + ")");
     }
 }
