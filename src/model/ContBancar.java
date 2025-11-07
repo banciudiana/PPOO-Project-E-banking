@@ -138,7 +138,7 @@ public abstract class ContBancar {
         if (this.valuta.equalsIgnoreCase(valutaNoua)) {
             throw new Exception("Contul este deja in " + valutaNoua);
         }
-        double soldNou = service.CursValutarService.convert(this.sold, this.valuta, valutaNoua);
+        double soldNou = service.CursValutarService.convertCuMatrice(this.sold, this.valuta, valutaNoua);
         this.sold = soldNou;
         this.valuta = valutaNoua;
     }

@@ -1,6 +1,7 @@
 package model;
 
 import exceptions.RetragereInainteDePerioadaException;
+import service.AuditService;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -201,13 +202,25 @@ public class ContEconomii extends ContBancar implements ContCuDobanda {
 
         String valutaVeche = this.valuta;
 
-        double soldNou = service.CursValutarService.convert(this.sold, valutaVeche, valutaNoua);
+
+        double soldNou = service.CursValutarService.convertCuMatrice(
+                this.sold,
+                valutaVeche,
+                valutaNoua
+        );
+
         double dobandaNoua = this.dobandaAcumulata > 0
-                ? service.CursValutarService.convert(this.dobandaAcumulata, valutaVeche, valutaNoua)
+                ? service.CursValutarService.convertCuMatrice(
+                this.dobandaAcumulata,
+                valutaVeche,
+                valutaNoua
+        )
                 : 0.0;
 
         this.sold = soldNou;
         this.dobandaAcumulata = dobandaNoua;
         this.valuta = valutaNoua;
+
+        AuditService.log("Conversie efectuat: " + valutaVeche + " -> " + valutaNoua);
     }
 }

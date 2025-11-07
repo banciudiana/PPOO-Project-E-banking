@@ -63,25 +63,17 @@ public class ClientFrame extends JFrame {
         actualizeazaConturi();
 
         JPopupMenu popupMenu = new JPopupMenu();
-        JMenuItem adaugaDobandaItem = new JMenuItem("Adaugă dobândă acumulată în sold");
+
         JMenuItem modificaMonedaItem = new JMenuItem("Modifică moneda");
         JMenuItem inchideContItem = new JMenuItem("Închide contul");
 
-        popupMenu.add(adaugaDobandaItem);
+
         popupMenu.addSeparator();
         popupMenu.add(modificaMonedaItem);
         popupMenu.addSeparator();
         popupMenu.add(inchideContItem);
 
 
-        adaugaDobandaItem.addActionListener(e -> {
-            int selectedRow = conturiTable.getSelectedRow();
-            if (selectedRow != -1) {
-                int contId = (int) tableModel.getValueAt(selectedRow, 0);
-                JOptionPane.showMessageDialog(this,
-                        "Funcționalitate în dezvoltare: Adaugă dobândă pentru contul " + contId);
-            }
-        });
 
         modificaMonedaItem.addActionListener(e -> {
             int selectedRow = conturiTable.getSelectedRow();
@@ -100,14 +92,27 @@ public class ClientFrame extends JFrame {
                     return;
                 }
 
-                // Determină valuta curentă și cea nouă
+
                 String valutaCurenta = cont.getValuta();
-                String valutaNoua = valutaCurenta.equalsIgnoreCase("RON") ? "EUR" : "RON";
+                String[] valuteDisponibile = {"RON", "EUR", "USD", "GBP"};
+                String valutaNoua = (String) JOptionPane.showInputDialog(
+                        this,
+                        "Alege valuta noua pentru contul " + contId + ":",
+                        "Selectie valuta",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        valuteDisponibile,
+                        valutaCurenta
+                );
+
+                if (valutaNoua == null || valutaNoua.equals(valutaCurenta)) {
+                    return;
+                }
 
                 // Calculează soldul convertit
                 try {
                     double soldCurent = cont.getSold();
-                    double soldConvertit = CursValutarService.convert(soldCurent, valutaCurenta, valutaNoua);
+                    double soldConvertit = CursValutarService.convertCuMatrice(soldCurent, valutaCurenta, valutaNoua);
 
 
                     String mesaj = String.format("""
@@ -363,7 +368,7 @@ public class ClientFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JComboBox<String> tipBox = new JComboBox<>(new String[]{"CURENT", "ECONOMII", "CREDIT"});
-        JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+        JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
         JTextField soldField = new JTextField("0");
 
         gbc.gridx = 0; gbc.gridy = 0; panel.add(new JLabel("Tip cont:"), gbc);
@@ -475,7 +480,7 @@ public class ClientFrame extends JFrame {
             }
 
             JTextField sumaField = new JTextField();
-            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
             JButton depuneBtn = new JButton("Depune");
 
             gbc.gridx = 0; gbc.gridy = 0; contentPanel.add(new JLabel("Alege contul:"), gbc);
@@ -528,7 +533,7 @@ public class ClientFrame extends JFrame {
                     }
                     // Cazul 2: Valute diferite - conversie DUPĂ comision
                     else {
-                        double sumaConvertita = CursValutarService.convert(
+                        double sumaConvertita = CursValutarService.convertCuMatrice(
                                 sumaDupaComision, valutaSelectata, cont.getValuta()
                         );
 
@@ -580,7 +585,7 @@ public class ClientFrame extends JFrame {
             }
 
             JTextField sumaField = new JTextField();
-            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
             JButton retrageBtn = new JButton("Retrage");
 
             gbc.gridx = 0; gbc.gridy = 0; contentPanel.add(new JLabel("Alege contul:"), gbc);
@@ -615,7 +620,7 @@ public class ClientFrame extends JFrame {
                     if (cont.getValuta().equalsIgnoreCase(valutaSelectata)) {
                         sumaInValutaCont = suma;
                     } else {
-                        sumaInValutaCont = CursValutarService.convert(suma, valutaSelectata, cont.getValuta());
+                        sumaInValutaCont = CursValutarService.convertCuMatrice(suma, valutaSelectata, cont.getValuta());
                     }
 
                     // Afișare confirmare
@@ -682,7 +687,7 @@ public class ClientFrame extends JFrame {
                 }
             });
 
-            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+            JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
             JButton transferaBtn = new JButton("Transferă");
 
             gbc.gridx = 0; gbc.gridy = 0; contentPanel.add(new JLabel("Din contul:"), gbc);
@@ -696,7 +701,7 @@ public class ClientFrame extends JFrame {
             gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
             contentPanel.add(transferaBtn, gbc);
 
-            // ======== LOGICA TRANSFER ========
+
             transferaBtn.addActionListener(ev -> {
                 try {
                     if (contSursaBox.getSelectedItem() == null || contDestBox.getSelectedItem() == null) {
@@ -723,19 +728,19 @@ public class ClientFrame extends JFrame {
 
                     String valutaSelectata = (String) valutaBox.getSelectedItem();
 
-                    // Pasul 1: Convertim suma selectată în valuta contului sursă
+                    // --- Conversie sumă la valuta contului sursă ---
                     double sumaInValutaSursa;
                     if (valutaSelectata.equalsIgnoreCase(sursa.getValuta())) {
                         sumaInValutaSursa = suma;
                     } else {
-                        sumaInValutaSursa = CursValutarService.convert(suma, valutaSelectata, sursa.getValuta());
+                        sumaInValutaSursa = CursValutarService.convertCuMatrice(suma, valutaSelectata, sursa.getValuta());
                     }
 
-                    // Pasul 2: Aplicăm comisionul (în valuta sursei)
+                    // --- Comision 2% ---
                     double comision = sumaInValutaSursa * 0.025;
                     double sumaTotalaSursa = sumaInValutaSursa + comision;
 
-                    // Verificare fonduri
+                    // --- Verificare fonduri ---
                     if (sursa.getSold() < sumaTotalaSursa) {
                         JOptionPane.showMessageDialog(this,
                                 String.format("Fonduri insuficiente!\nNecesar: %.2f %s\nDisponibil: %.2f %s",
@@ -743,62 +748,43 @@ public class ClientFrame extends JFrame {
                         return;
                     }
 
-                    // Pasul 3: Convertim suma netă în valuta destinației
+                    // --- Conversie pentru destinație ---
                     double sumaInValutaDest;
                     if (sursa.getValuta().equalsIgnoreCase(destinatie.getValuta())) {
                         sumaInValutaDest = sumaInValutaSursa;
                     } else {
-                        sumaInValutaDest = CursValutarService.convert(
+                        sumaInValutaDest = CursValutarService.convertCuMatrice(
                                 sumaInValutaSursa, sursa.getValuta(), destinatie.getValuta()
                         );
                     }
 
-                    // Afișăm alerta detaliată
+                    // --- Confirmare detalii ---
                     StringBuilder mesaj = new StringBuilder();
                     mesaj.append("Transfer bancar:\n\n");
                     mesaj.append(String.format("Suma inițială: %.2f %s\n", suma, valutaSelectata));
-
                     if (!valutaSelectata.equalsIgnoreCase(sursa.getValuta())) {
                         mesaj.append(String.format("Echivalent în cont sursă: %.2f %s\n",
                                 sumaInValutaSursa, sursa.getValuta()));
                     }
-
                     mesaj.append(String.format("Comision (2%%): %.2f %s\n", comision, sursa.getValuta()));
                     mesaj.append(String.format("Total retras din sursă: %.2f %s\n\n",
                             sumaTotalaSursa, sursa.getValuta()));
-
                     if (!sursa.getValuta().equalsIgnoreCase(destinatie.getValuta())) {
                         mesaj.append(String.format("Conversie: %.2f %s → %.2f %s\n\n",
                                 sumaInValutaSursa, sursa.getValuta(),
                                 sumaInValutaDest, destinatie.getValuta()));
                     }
-
                     mesaj.append(String.format("Se adaugă în destinație: %.2f %s\n\n",
                             sumaInValutaDest, destinatie.getValuta()));
                     mesaj.append("Dorești să continui?");
 
                     int confirm = JOptionPane.showConfirmDialog(this, mesaj.toString(),
-                            "Confirmare transfer",
-                            JOptionPane.OK_CANCEL_OPTION,
-                            JOptionPane.QUESTION_MESSAGE);
+                            "Confirmare transfer", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
 
                     if (confirm != JOptionPane.OK_OPTION) return;
 
-                    // Executăm transferul
-                    sursa.setSold(sursa.getSold() - sumaTotalaSursa);
-                    destinatie.setSold(destinatie.getSold() + sumaInValutaDest);
 
-                    // Log tranzacție
-                    Tranzactie tranz = new Tranzactie(
-                            new Random().nextInt(999999),
-                            sursa,
-                            destinatie,
-                            sumaInValutaSursa
-
-                    );
-
-                    banca.adaugaTranzactie(tranz);
-                    banca.salveazaDate();
+                    banca.transfera(client, idSursa, idDest, sumaInValutaSursa);
 
                     JOptionPane.showMessageDialog(this, "Transfer efectuat cu succes!");
                     actualizeazaConturi();
@@ -807,6 +793,7 @@ public class ClientFrame extends JFrame {
                     JOptionPane.showMessageDialog(this, "Eroare la transfer: " + ex.getMessage());
                 }
             });
+
 
             contentPanel.revalidate();
             contentPanel.repaint();

@@ -23,12 +23,12 @@ public class FileManager {
             String linie;
             while ((linie = br.readLine()) != null) {
                 String[] c = linie.split(";");
-                if (c.length == 5) {
+                if (c.length == 4) {
                     Client cl = new Client(
                             Integer.parseInt(c[0]),
                             c[1],
                             c[2],
-                            c[3]
+                            c[3].trim()
 
                     );
                     clienti.add(cl);
@@ -138,14 +138,13 @@ public class FileManager {
                 if (line.isEmpty()) continue;
 
                 String[] parts = line.split(";");
-                if (parts.length < 6) continue;
+                if (parts.length < 5) continue;
 
                 int id = Integer.parseInt(parts[0]);
                 int idSursa = Integer.parseInt(parts[1]);
                 int idDest = Integer.parseInt(parts[2]);
                 double suma = Double.parseDouble(parts[3]);
-                String tip = parts[4];
-                LocalDateTime data = LocalDateTime.parse(parts[5]);
+                LocalDateTime data = LocalDateTime.parse(parts[4]);
 
                 ContBancar sursa = conturi.get(idSursa);
                 ContBancar destinatie = conturi.get(idDest);

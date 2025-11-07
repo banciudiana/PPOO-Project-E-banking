@@ -246,4 +246,42 @@ public class Banca {
         AuditService.log("Cont inchis cu succes: " + contId + " (Client: " +
                 cont.getClient().getNume() + ")");
     }
+
+    public void transfera(Client client, int idContSursa, int idContDest, double suma) throws Exception {
+        ContBancar sursa = conturi.get(idContSursa);
+        ContBancar destinatie = conturi.get(idContDest);
+
+        if (sursa == null || destinatie == null) {
+            throw new Exception("Unul dintre conturi nu exista!");
+        }
+
+        if (sursa.getClient().getId() != client.getId()) {
+            throw new Exception("Nu poti face transfer dintr-un cont care nu iti apartine!");
+        }
+
+        if (suma <= 0) {
+            throw new Exception("Suma trebuie sa fie pozitiva!");
+        }
+
+
+        boolean esteEconomiiSauCredit = (sursa instanceof ContEconomii) || (sursa instanceof ContCredit);
+        boolean destinatarEsteAltClient = sursa.getClient().getId() != destinatie.getClient().getId();
+
+        if (esteEconomiiSauCredit && destinatarEsteAltClient) {
+            AuditService.log("Eroare transfer: incercare de transfer din cont " +
+                    sursa.getId() + " (" + sursa.getClass().getSimpleName() + ") catre alt client.");
+            throw new Exception("Nu poti face transfer dintr-un cont de economii sau credit catre alt client!");
+        }
+
+        // --- Execută transferul ---
+        sursa.retrage(suma);
+        destinatie.depune(suma);
+
+        Tranzactie t = new Tranzactie(new Random().nextInt(999999),sursa, destinatie, suma);
+        adaugaTranzactie(t);
+
+        salveazaDate();
+        AuditService.log("Transfer reusit: " + suma + " " + sursa.getValuta() +
+                " | din cont " + idContSursa + " catre cont " + idContDest);
+    }
 }

@@ -54,7 +54,7 @@ public class ContCredit extends ContBancar {
         if( this.getValuta().equals("RON")){
             if (sold - suma < LIMITA_CREDIT)
                 throw new Exception("Limita de credit depasita!");
-        } else if (sold - suma < CursValutarService.convert(LIMITA_CREDIT,"RON","EUR")) {
+        } else if (sold - suma < CursValutarService.convertCuMatrice(LIMITA_CREDIT,"RON","EUR")) {
             throw new Exception("Limita de credit depasita!");
 
         }
