@@ -10,13 +10,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Clasa FileManager se ocupa cu citirea si scrierea datelor in fisiere.
+ * Include metode pentru clienti, conturi bancare si tranzactii.
+ */
+
 public class FileManager {
 
     private static final String CLIENTI_FILE = "data/clienti.txt";
     private static final String CONTURI_FILE = "data/conturi.txt";
     private static final String TRANZACTII_FILE = "data/tranzactii.txt";
 
-    /** Încarcă toți clienții din fișier. */
+
+
+    /**
+     * Incarca toti clientii din fisierul clienti.txt.
+     * @return lista de clienti
+     */
     public static ArrayList<Client> incarcaClienti() {
         ArrayList<Client> clienti = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(CLIENTI_FILE))) {
@@ -40,7 +50,11 @@ public class FileManager {
         return clienti;
     }
 
-    /** Salvează toți clienții în fișier. */
+
+    /**
+     * Salveaza toti clientii in fisierul clienti.txt.
+     * @param clienti lista de clienti de salvat
+     */
     public static void salveazaClienti(ArrayList<Client> clienti) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(CLIENTI_FILE))) {
             for (Client c : clienti) {
@@ -51,7 +65,11 @@ public class FileManager {
         }
     }
 
-    /** Încarcă conturile din fișier. */
+    /**
+     * Incarca toate conturile din fisierul conturi.txt.
+     * @param clienti lista de clienti existenti
+     * @return harta cu id-ul contului ca si cheia si obiectul ContBancar ca valoare
+     */
     public static HashMap<Integer, ContBancar> incarcaConturi(ArrayList<Client> clienti) {
         HashMap<Integer, ContBancar> conturi = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(CONTURI_FILE))) {
@@ -100,7 +118,10 @@ public class FileManager {
         return conturi;
     }
 
-    /** Salvează conturile în fișier. */
+    /**
+     * Salveaza toate conturile in fisierul conturi.txt.
+     * @param conturi harta cu conturi de salvat
+     */
     public static void salveazaConturi(HashMap<Integer, ContBancar> conturi) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(CONTURI_FILE))) {
             for (ContBancar c : conturi.values()) {
@@ -115,7 +136,7 @@ public class FileManager {
                             c.getValuta() + ";" + tip + ";" + creation + ";" +
                             ce.getTip().name() + ";" + ce.getDobandaAcumulata());
                 } else {
-                    // scriem liniile cu câmpuri goale pentru compatibilitate
+
                     pw.println(c.getId() + ";" + c.getSold() + ";" + c.getClient().getId() + ";" +
                             c.getValuta() + ";" + tip + ";" + creation + ";;0.0");
                 }
@@ -127,6 +148,11 @@ public class FileManager {
     }
 
 
+    /**
+     * Incarca toate tranzactiile din fisierul tranzactii.txt.
+     * @param conturi harta cu conturile existente
+     * @return lista de tranzactii
+     */
     public static ArrayList<Tranzactie> incarcaTranzactii(HashMap<Integer, ContBancar> conturi) {
         ArrayList<Tranzactie> tranzactii = new ArrayList<>();
         File file = new File(TRANZACTII_FILE);
@@ -159,7 +185,10 @@ public class FileManager {
         return tranzactii;
     }
 
-
+    /**
+     * Salveaza toate tranzactiile in fisierul tranzactii.txt.
+     * @param tranzactii lista de tranzactii de salvat
+     */
     public static void salveazaTranzactii(List<Tranzactie> tranzactii) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(TRANZACTII_FILE))) {
             for (Tranzactie t : tranzactii) {
@@ -174,6 +203,11 @@ public class FileManager {
         }
     }
 
+    /**
+     * Citeste ultima data la care s-a aplicat dobanda pentru conturile de economii.
+     * @return data ultimei dobanzi sau LocalDate.MIN daca fisierul nu exista
+     */
+
     public static LocalDate citesteUltimaDataDobanda() {
         try (BufferedReader br = new BufferedReader(new FileReader("data/ultima_dobanda.txt"))) {
             return LocalDate.parse(br.readLine());
@@ -182,6 +216,11 @@ public class FileManager {
         }
     }
 
+
+    /**
+     * Salveaza ultima data la care s-a aplicat dobanda pentru conturile de economii.
+     * @param data data de salvat
+     */
     public static void salveazaUltimaDataDobanda(LocalDate data) {
         try (PrintWriter pw = new PrintWriter(new FileWriter("data/ultima_dobanda.txt"))) {
             pw.println(data.toString());

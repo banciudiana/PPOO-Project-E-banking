@@ -1,0 +1,18 @@
+2025-11-07 - Datele au fost salvate pe disc.
+2025-11-07 - Dobanda lunara aplicata pentru 4 conturi de economii.
+2025-11-07 - Dobanda lunara aplicata automat la pornirea aplicatiei.
+2025-11-07 - Initializare sistem Banca completata. Clienti: 4, Conturi: 9, Tranzactii: 0
+2025-11-07 - LOGIN esuat pentru: anaelena@gmail.com
+2025-11-07 - Autentificare esuata GUI: anaelena@gmail.com
+2025-11-07 - LOGIN reusit pentru: anaelena@gmail.com
+2025-11-07 - Utilizator autentificat GUI: anaelena@gmail.com
+2025-11-07 - Cont economii creat pentru client: anaelena@gmail.com | tip=Bonus | valuta=EUR
+2025-11-07 - Datele au fost salvate pe disc.
+2025-11-07 - Eroare transfer: incercare de transfer din cont 1010 (ContEconomii) catre alt client.
+2025-11-07 - Initializare sistem Banca completata. Clienti: 4, Conturi: 10, Tranzactii: 0
+2025-11-07 - Initializare sistem Banca completata. Clienti: 4, Conturi: 10, Tranzactii: 0
+2025-11-07 - LOGIN reusit pentru: anaelena@gmail.com
+2025-11-07 - Utilizator autentificat GUI: anaelena@gmail.com
+2025-11-07 - Initializare sistem Banca completata. Clienti: 4, Conturi: 10, Tranzactii: 0
+2025-11-07 - LOGIN reusit pentru: anaelena@gmail.com
+2025-11-07 - Utilizator autentificat GUI: anaelena@gmail.com

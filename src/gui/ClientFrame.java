@@ -19,7 +19,10 @@ import javax.swing.event.MouseInputAdapter;
 import java.awt.event.MouseEvent;
 
 /**
- * Interfata GUI pentru un client logat.
+ * Fereastra GUI pentru clientii logati.
+ * Permite vizualizarea conturilor, crearea de conturi noi,
+ * efectuarea de operatiuni (depunere, retragere, transfer),
+ * vizualizarea statisticilor si istoricul tranzactiilor.
  */
 public class ClientFrame extends JFrame {
 
@@ -28,9 +31,15 @@ public class ClientFrame extends JFrame {
     private JTable conturiTable;
     private DefaultTableModel tableModel;
 
-    // COMISION general pentru operațiuni (poți modifica aici)
-    //private static final double COMISION_PROCENT = 0.02; // 2%
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+
+    /**
+     * Constructor pentru ClientFrame.
+     * Initializeaza interfata cu tab-uri pentru conturi, creare cont, operatiuni, statistici si istoric tranzactii.
+     * @param banca obiectul Banca care contine datele clientilor si conturilor
+     * @param client clientul logat
+     */
 
     public ClientFrame(Banca banca, Client client) {
         this.banca = banca;
@@ -54,6 +63,11 @@ public class ClientFrame extends JFrame {
     // ==================== Panel Conturi ====================
 
 
+    /**
+     * Creeaza panoul cu lista de conturi ale clientului.
+     * Permite modificarea monedei si inchiderea contului.
+     * @return JPanel cu tabelul conturilor
+     */
 
     private JPanel creeazaPanelConturi() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -67,13 +81,10 @@ public class ClientFrame extends JFrame {
         JMenuItem modificaMonedaItem = new JMenuItem("Modifică moneda");
         JMenuItem inchideContItem = new JMenuItem("Închide contul");
 
-
         popupMenu.addSeparator();
         popupMenu.add(modificaMonedaItem);
         popupMenu.addSeparator();
         popupMenu.add(inchideContItem);
-
-
 
         modificaMonedaItem.addActionListener(e -> {
             int selectedRow = conturiTable.getSelectedRow();
@@ -86,9 +97,8 @@ public class ClientFrame extends JFrame {
                     return;
                 }
 
-                // Verifică că aparține clientului curent
                 if (cont.getClient().getId() != client.getId()) {
-                    JOptionPane.showMessageDialog(this, "Nu poți modifica un cont care nu îți aparține!");
+                    JOptionPane.showMessageDialog(this, "Nu poți modifica un cont care nu iti apartine!");
                     return;
                 }
 
@@ -109,42 +119,39 @@ public class ClientFrame extends JFrame {
                     return;
                 }
 
-                // Calculează soldul convertit
                 try {
                     double soldCurent = cont.getSold();
                     double soldConvertit = CursValutarService.convertCuMatrice(soldCurent, valutaCurenta, valutaNoua);
 
 
                     String mesaj = String.format("""
-                 ATENȚIE: Conversie valutară
+                ATENȚIE: Conversie valutară
                 
                 Contul %d va fi convertit din %s în %s.
                 
                  Detalii conversie:
                 • Sold actual: %.2f %s
                 • Sold după conversie: %.2f %s
-                • Curs aplicat: %s
+              
                 
                 IMPORTANT:
                 Această operațiune va converti permanent 
                 soldul contului la cursul curent de schimb.
                 
-                Viitoarele operațiuni (depuneri, retrageri, 
-                transferuri) vor utiliza cursul valutar 
-                din momentul efectuării lor.
+                
                 
                 Dorești să continui?
                 """,
                             contId, valutaCurenta, valutaNoua,
                             soldCurent, valutaCurenta,
-                            soldConvertit, valutaNoua,
-                            CursValutarService.getCurs(valutaCurenta, valutaNoua)
+                            soldConvertit, valutaNoua
+
                     );
 
                     int confirm = JOptionPane.showConfirmDialog(
                             this,
                             mesaj,
-                            "Confirmare conversie valutară",
+                            "Confirmare conversie valutara",
                             JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE
                     );
@@ -153,15 +160,15 @@ public class ClientFrame extends JFrame {
                         return;
                     }
 
-                    // Efectuează schimbarea
+
                     cont.schimbaValuta(valutaNoua);
                     banca.salveazaDate();
 
-                    // Mesaj de succes
+
                     JOptionPane.showMessageDialog(
                             this,
                             String.format("""
-                    Conversie realizată cu succes!
+                    Conversie realizata cu succes!
                     
                     Contul %d este acum în %s
                     Sold nou: %.2f %s
@@ -171,10 +178,10 @@ public class ClientFrame extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE
                     );
 
-                    // Actualizează tabelul
+
                     actualizeazaConturi();
 
-                    // Log audit
+
                     AuditService.log(String.format(
                             "Conversie valută: Cont %d din %s în %s (%.2f → %.2f)",
                             contId, valutaCurenta, valutaNoua, soldCurent, soldConvertit
@@ -205,7 +212,7 @@ public class ClientFrame extends JFrame {
 
                 if (cont.getClient().getId() != client.getId()) {
                     JOptionPane.showMessageDialog(this,
-                            "Nu poți închide un cont care nu îți aparține!",
+                            "Nu poți inchide un cont care nu iti apartine!",
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE);
                     return;
@@ -216,16 +223,16 @@ public class ClientFrame extends JFrame {
                 if (Math.abs(sold) > 0.01) {
 
                     String mesaj = String.format("""
-                Nu poți închide acest cont!
+                Nu poți inchide acest cont!
                 
                 Contul %d are un sold de %.2f %s
                 
-                Pentru a închide contul, soldul trebuie să fie 0.
+                Pentru a inchide contul, soldul trebuie să fie 0.
                 
                 Sugestii:
-                • Retrage suma disponibilă
-                • Transferă banii în alt cont
-                • Verifică dacă ai dobândă acumulată neaplicată
+                • Retrage suma disponibila
+                • Transfera banii în alt cont
+               
                 """,
                             contId, sold, cont.getValuta()
                     );
@@ -247,7 +254,7 @@ public class ClientFrame extends JFrame {
                 }
 
                 String mesajConfirmare = String.format("""
-            Ești sigur că vrei să închizi acest cont?
+            Ești sigur ca vrei sa inchizi acest cont?
             
            Detalii cont:
             • ID: %d
@@ -256,10 +263,10 @@ public class ClientFrame extends JFrame {
             • Data creare: %s
             
             ATENȚIE:
-            Această acțiune este PERMANENTĂ și IREVERSIBILĂ!
-            Contul și istoricul acestuia vor fi șterse definitiv.
+            Aceasta acțiune este PERMANENTĂ și IREVERSIBILĂ!
+           
             
-            Dorești să continui?
+            Doresti sa continui?
             """,
                         contId,
                         tipCont,
@@ -279,16 +286,16 @@ public class ClientFrame extends JFrame {
                     return;
                 }
 
-                // ȘTERGERE FINALĂ
+
                 try {
                     banca.inchideCont(contId, client.getId());
 
                     JOptionPane.showMessageDialog(
                             this,
                             String.format("""
-                     Contul %d a fost închis cu succes!
+                     Contul %d a fost inchis cu succes!
                     
-                    Contul și tranzacțiile asociate 
+                    Contul si tranzactiile asociate 
                     au fost șterse definitiv.
                     """,
                                     contId),
@@ -296,13 +303,13 @@ public class ClientFrame extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE
                     );
 
-                    // Actualizează tabelul
+
                     actualizeazaConturi();
 
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(
                             this,
-                            "Eroare la închiderea contului:\n" + ex.getMessage(),
+                            "Eroare la inchiderea contului:\n" + ex.getMessage(),
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE
                     );
@@ -355,12 +362,14 @@ public class ClientFrame extends JFrame {
     }
 
 
-
-
-
-
-
     // ==================== Panel Creare Cont ====================
+
+    /**
+     * Creeaza panoul pentru crearea unui cont nou.
+     * Permite alegerea tipului de cont si a monedei.
+     * @return JPanel cu formularul de creare cont
+     */
+
     private JPanel creeazaPanelCreareCont() {
         JPanel panel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -406,12 +415,12 @@ public class ClientFrame extends JFrame {
                     );
 
                     if (selectie == -1) {
-                        // utilizator a inchis pop-up-ul
+
                         return;
                     }
 
                     String tipEconomii = optiuni[selectie];
-                    // creare cont economii cu tipul ales
+
 
 
                     ContEconomii cont = banca.creaContEconomiiPentruClient(client, sold, valuta, tipEconomii);
@@ -419,7 +428,7 @@ public class ClientFrame extends JFrame {
                     JOptionPane.showMessageDialog(this, "Cont economii creat cu succes! ID: " + cont.getId() +
                             "\nTip: " + tipEconomii);
                 } else {
-                    // conturi CURENT sau CREDIT
+
                     ContBancar cont = banca.creaContPentruClient(client, tip, sold, valuta);
                     banca.salveazaDate();
                     JOptionPane.showMessageDialog(this, "Cont creat cu succes! ID: " + cont.getId());
@@ -435,6 +444,11 @@ public class ClientFrame extends JFrame {
         return panel;
     }
 
+
+    /**
+     * Creeaza panoul pentru operatiuni financiare: depunere, retragere, transfer.
+     * @return JPanel cu meniul de operatiuni
+     */
 
     // ==================== Panel Operatiuni ====================
     private JPanel creeazaPanelOperatiuni() {
@@ -495,7 +509,7 @@ public class ClientFrame extends JFrame {
             depuneBtn.addActionListener(ev -> {
                 try {
                     if (contBox.getSelectedItem() == null) {
-                        JOptionPane.showMessageDialog(this, "Selectează un cont.");
+                        JOptionPane.showMessageDialog(this, "Selecteaza un cont.");
                         return;
                     }
 
@@ -506,22 +520,22 @@ public class ClientFrame extends JFrame {
                     String valutaSelectata = (String) valutaBox.getSelectedItem();
 
                     if (suma <= 0) {
-                        JOptionPane.showMessageDialog(this, "Introdu o sumă validă.");
+                        JOptionPane.showMessageDialog(this, "Introdu o suma validă.");
                         return;
                     }
 
 
                     double sumaDupaComision = suma;
 
-                    // Cazul 1: Aceeași valută
+
                     if (cont.getValuta().equalsIgnoreCase(valutaSelectata)) {
                         int confirm = JOptionPane.showConfirmDialog(this,
                                 String.format("""
                                     Depunere în %s:
-                                    Suma depusă: %.2f %s
-                                    Se adaugă în cont: %.2f %s
+                                    Suma depusa: %.2f %s
+                                    Se adauga în cont: %.2f %s
                                     
-                                    Dorești să continui?
+                                    Doresti sa continui?
                                     """,
                                         cont.getValuta(), suma, valutaSelectata,
                                         sumaDupaComision, cont.getValuta()),
@@ -531,7 +545,7 @@ public class ClientFrame extends JFrame {
                         if (confirm != JOptionPane.OK_OPTION) return;
                         cont.setSold(cont.getSold() + sumaDupaComision);
                     }
-                    // Cazul 2: Valute diferite - conversie DUPĂ comision
+
                     else {
                         double sumaConvertita = CursValutarService.convertCuMatrice(
                                 sumaDupaComision, valutaSelectata, cont.getValuta()
@@ -539,16 +553,16 @@ public class ClientFrame extends JFrame {
 
                         int confirm = JOptionPane.showConfirmDialog(this,
                                 String.format("""
-                                Conversie valutară:
-                                Suma depusă: %.2f %s
-                                Echivalent în cont: %.2f %s
+                                Conversie valutara:
+                                Suma depusa: %.2f %s
+                                Echivalent in cont: %.2f %s
                                 Curs valutar aplicat
                                 
-                                Dorești să continui?
+                                Doresti sa continui?
                                 """,
                                         suma, valutaSelectata,
                                         sumaConvertita, cont.getValuta()),
-                                "Conversie valutară",
+                                "Conversie valutara",
                                 JOptionPane.OK_CANCEL_OPTION,
                                 JOptionPane.WARNING_MESSAGE);
                         if (confirm != JOptionPane.OK_OPTION) return;
@@ -556,7 +570,7 @@ public class ClientFrame extends JFrame {
                     }
 
                     banca.salveazaDate();
-                    JOptionPane.showMessageDialog(this, "Depunere efectuată cu succes!");
+                    JOptionPane.showMessageDialog(this, "Depunere efectuata cu succes!");
                     actualizeazaConturi();
 
                 } catch (Exception ex) {
@@ -600,7 +614,7 @@ public class ClientFrame extends JFrame {
             retrageBtn.addActionListener(ev -> {
                 try {
                     if (contBox.getSelectedItem() == null) {
-                        JOptionPane.showMessageDialog(this, "Selectează un cont.");
+                        JOptionPane.showMessageDialog(this, "Selecteaza un cont.");
                         return;
                     }
 
@@ -611,11 +625,11 @@ public class ClientFrame extends JFrame {
                     String valutaSelectata = (String) valutaBox.getSelectedItem();
 
                     if (suma <= 0) {
-                        JOptionPane.showMessageDialog(this, "Introdu o sumă validă.");
+                        JOptionPane.showMessageDialog(this, "Introdu o sumă valida.");
                         return;
                     }
 
-                    // Convertim suma în valuta contului
+
                     double sumaInValutaCont;
                     if (cont.getValuta().equalsIgnoreCase(valutaSelectata)) {
                         sumaInValutaCont = suma;
@@ -623,14 +637,14 @@ public class ClientFrame extends JFrame {
                         sumaInValutaCont = CursValutarService.convertCuMatrice(suma, valutaSelectata, cont.getValuta());
                     }
 
-                    // Afișare confirmare
+
                     int confirm = JOptionPane.showConfirmDialog(this,
                             String.format("""
                 Retragere:
                 Suma: %.2f %s
                 Echivalent în cont: %.2f %s
                 
-                Dorești să continui?
+                Doresti sa continui?
                 """,
                                     suma, valutaSelectata,
                                     sumaInValutaCont, cont.getValuta()),
@@ -639,7 +653,7 @@ public class ClientFrame extends JFrame {
 
                     if (confirm != JOptionPane.OK_OPTION) return;
 
-                    // Apelează modelul pentru validare și retragere
+
                     cont.retrage(sumaInValutaCont);
                     banca.salveazaDate();
 
@@ -665,7 +679,7 @@ public class ClientFrame extends JFrame {
             gbc.insets = new Insets(8, 8, 8, 8);
             gbc.fill = GridBagConstraints.HORIZONTAL;
 
-            // Dropdown conturi sursă (doar ale clientului curent)
+
             JComboBox<String> contSursaBox = new JComboBox<>();
             for (ContBancar c : banca.getConturi().values()) {
                 if (c.getClient().getId() == client.getId()) {
@@ -673,7 +687,7 @@ public class ClientFrame extends JFrame {
                 }
             }
 
-            // Dropdown conturi destinație (toate conturile din bancă)
+
             JComboBox<String> contDestBox = new JComboBox<>();
             for (ContBancar c : banca.getConturi().values()) {
                 contDestBox.addItem(c.getId() + " - " + c.getClient().getNume() + " (" + c.getValuta() + ")");
@@ -688,11 +702,11 @@ public class ClientFrame extends JFrame {
             });
 
             JComboBox<String> valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
-            JButton transferaBtn = new JButton("Transferă");
+            JButton transferaBtn = new JButton("Transfera");
 
             gbc.gridx = 0; gbc.gridy = 0; contentPanel.add(new JLabel("Din contul:"), gbc);
             gbc.gridx = 1; contentPanel.add(contSursaBox, gbc);
-            gbc.gridx = 0; gbc.gridy = 1; contentPanel.add(new JLabel("În contul:"), gbc);
+            gbc.gridx = 0; gbc.gridy = 1; contentPanel.add(new JLabel("In contul:"), gbc);
             gbc.gridx = 1; contentPanel.add(contDestBox, gbc);
             gbc.gridx = 0; gbc.gridy = 2; contentPanel.add(new JLabel("Suma:"), gbc);
             gbc.gridx = 1; contentPanel.add(sumaField, gbc);
@@ -705,7 +719,7 @@ public class ClientFrame extends JFrame {
             transferaBtn.addActionListener(ev -> {
                 try {
                     if (contSursaBox.getSelectedItem() == null || contDestBox.getSelectedItem() == null) {
-                        JOptionPane.showMessageDialog(this, "Selectează ambele conturi.");
+                        JOptionPane.showMessageDialog(this, "Selecteaza ambele conturi.");
                         return;
                     }
 
@@ -722,13 +736,13 @@ public class ClientFrame extends JFrame {
 
                     double suma = Double.parseDouble(sumaField.getText().trim());
                     if (suma <= 0) {
-                        JOptionPane.showMessageDialog(this, "Introdu o sumă validă!");
+                        JOptionPane.showMessageDialog(this, "Introdu o suma valida!");
                         return;
                     }
 
                     String valutaSelectata = (String) valutaBox.getSelectedItem();
 
-                    // --- Conversie sumă la valuta contului sursă ---
+
                     double sumaInValutaSursa;
                     if (valutaSelectata.equalsIgnoreCase(sursa.getValuta())) {
                         sumaInValutaSursa = suma;
@@ -736,11 +750,11 @@ public class ClientFrame extends JFrame {
                         sumaInValutaSursa = CursValutarService.convertCuMatrice(suma, valutaSelectata, sursa.getValuta());
                     }
 
-                    // --- Comision 2% ---
-                    double comision = sumaInValutaSursa * 0.025;
-                    double sumaTotalaSursa = sumaInValutaSursa + comision;
 
-                    // --- Verificare fonduri ---
+
+                    double sumaTotalaSursa = sumaInValutaSursa;
+
+
                     if (sursa.getSold() < sumaTotalaSursa) {
                         JOptionPane.showMessageDialog(this,
                                 String.format("Fonduri insuficiente!\nNecesar: %.2f %s\nDisponibil: %.2f %s",
@@ -748,7 +762,6 @@ public class ClientFrame extends JFrame {
                         return;
                     }
 
-                    // --- Conversie pentru destinație ---
                     double sumaInValutaDest;
                     if (sursa.getValuta().equalsIgnoreCase(destinatie.getValuta())) {
                         sumaInValutaDest = sumaInValutaSursa;
@@ -758,25 +771,25 @@ public class ClientFrame extends JFrame {
                         );
                     }
 
-                    // --- Confirmare detalii ---
+
                     StringBuilder mesaj = new StringBuilder();
                     mesaj.append("Transfer bancar:\n\n");
-                    mesaj.append(String.format("Suma inițială: %.2f %s\n", suma, valutaSelectata));
+                    mesaj.append(String.format("Suma initiala: %.2f %s\n", suma, valutaSelectata));
                     if (!valutaSelectata.equalsIgnoreCase(sursa.getValuta())) {
-                        mesaj.append(String.format("Echivalent în cont sursă: %.2f %s\n",
+                        mesaj.append(String.format("Echivalent în cont sursa: %.2f %s\n",
                                 sumaInValutaSursa, sursa.getValuta()));
                     }
-                    mesaj.append(String.format("Comision (2%%): %.2f %s\n", comision, sursa.getValuta()));
-                    mesaj.append(String.format("Total retras din sursă: %.2f %s\n\n",
+
+                    mesaj.append(String.format("Total retras din sursa: %.2f %s\n\n",
                             sumaTotalaSursa, sursa.getValuta()));
                     if (!sursa.getValuta().equalsIgnoreCase(destinatie.getValuta())) {
                         mesaj.append(String.format("Conversie: %.2f %s → %.2f %s\n\n",
                                 sumaInValutaSursa, sursa.getValuta(),
                                 sumaInValutaDest, destinatie.getValuta()));
                     }
-                    mesaj.append(String.format("Se adaugă în destinație: %.2f %s\n\n",
+                    mesaj.append(String.format("Se adaugă în destinatie: %.2f %s\n\n",
                             sumaInValutaDest, destinatie.getValuta()));
-                    mesaj.append("Dorești să continui?");
+                    mesaj.append("Doresti sa continui?");
 
                     int confirm = JOptionPane.showConfirmDialog(this, mesaj.toString(),
                             "Confirmare transfer", JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
@@ -806,6 +819,12 @@ public class ClientFrame extends JFrame {
     }
 
 
+
+    /**
+     * Creeaza panoul pentru statistici conturi.
+     * Afiseaza soldurile pe tipuri de cont si graficul pieselor.
+     * @return JPanel cu statistici si grafic
+     */
     private JPanel creeazaPanelStatistici() {
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -837,6 +856,12 @@ public class ClientFrame extends JFrame {
         return panel;
     }
 
+    /**
+     * Actualizeaza panoul de statistici cu datele curente.
+     * @param chartPanel JPanel pentru graficul circular
+     * @param statsArea JTextArea pentru statistici textuale
+     */
+
     private void actualizeazaStatistici(JPanel chartPanel, JTextArea statsArea) {
         double total = 0, curent = 0, economii = 0, credit = 0;
         int nrCurent = 0, nrEconomii = 0, nrCredit = 0;
@@ -861,19 +886,14 @@ public class ClientFrame extends JFrame {
 
         // Actualizare text statistici
         StringBuilder stats = new StringBuilder();
-        stats.append("═══════════════════════════\n");
         stats.append("     STATISTICI CONTURI\n");
-        stats.append("═══════════════════════════\n\n");
-        stats.append(String.format("💰 SOLD TOTAL: %.2f RON\n\n", total));
-        stats.append("───────────────────────────\n");
-        stats.append(String.format("🏦 Conturi Curente (%d):\n", nrCurent));
-        stats.append(String.format("   %.2f RON (%.1f%%)\n\n", curent, total > 0 ? (curent/total)*100 : 0));
-        stats.append(String.format("🐷 Conturi Economii (%d):\n", nrEconomii));
-        stats.append(String.format("   %.2f RON (%.1f%%)\n\n", economii, total > 0 ? (economii/total)*100 : 0));
-        stats.append(String.format("💳 Conturi Credit (%d):\n", nrCredit));
-        stats.append(String.format("   %.2f RON (%.1f%%)\n", credit, total > 0 ? (credit/total)*100 : 0));
-        stats.append("───────────────────────────\n");
-
+        stats.append(String.format("SOLD TOTAL: %.2f RON\n\n", total));
+        stats.append(String.format("Conturi Curente (%d):\n", nrCurent));
+        stats.append(String.format("%.2f RON (%.1f%%)\n\n", curent, total > 0 ? (curent/total)*100 : 0));
+        stats.append(String.format("Conturi Economii (%d):\n", nrEconomii));
+        stats.append(String.format("%.2f RON (%.1f%%)\n\n", economii, total > 0 ? (economii/total)*100 : 0));
+        stats.append(String.format("Conturi Credit (%d):\n", nrCredit));
+        stats.append(String.format("%.2f RON (%.1f%%)\n", credit, total > 0 ? (credit/total)*100 : 0));
         statsArea.setText(stats.toString());
 
         // Creare dataset pentru pie chart
@@ -918,16 +938,13 @@ public class ClientFrame extends JFrame {
                 new DecimalFormat("0.0%")
         ));
 
-        // Distanță între secțiuni pentru efect 3D ușor
-        plot.setExplodePercent("Cont Curent", 0.02);
-        plot.setExplodePercent("Cont Economii", 0.02);
-        plot.setExplodePercent("Cont Credit", 0.02);
 
-        // Stil pentru legendă
-        chart.getLegend().setBackgroundPaint(new Color(255, 255, 255, 200));
-        chart.getLegend().setFrame(new org.jfree.chart.block.BlockBorder(Color.LIGHT_GRAY));
 
-        // Adăugare în panel
+//        // Stil pentru legendă
+//        chart.getLegend().setBackgroundPaint(new Color(255, 255, 255, 200));
+//        chart.getLegend().setFrame(new org.jfree.chart.block.BlockBorder(Color.LIGHT_GRAY));
+
+        // Adaugare în panel
         chartPanel.removeAll();
         ChartPanel cp = new ChartPanel(chart);
         cp.setPreferredSize(new Dimension(400, 400));
@@ -937,10 +954,16 @@ public class ClientFrame extends JFrame {
         chartPanel.repaint();
     }
 
+
+    /**
+     * Creeaza panoul pentru vizualizarea istoricului tranzactiilor.
+     * Permite filtrarea dupa contul clientului logat.
+     * @return JPanel cu tabelul tranzactiilor
+     */
     private JPanel creeazaPanelTranzactii() {
         JPanel panel = new JPanel(new BorderLayout());
 
-        // Dropdown pentru filtrare după conturile clientului logat
+        // Dropdown pentru filtrare dupa conturile clientului logat
         JComboBox<String> conturiClientBox = new JComboBox<>();
         conturiClientBox.addItem("Toate conturile"); // opțiune implicită
 
@@ -966,7 +989,7 @@ public class ClientFrame extends JFrame {
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        // Funcție internă pentru actualizarea tabelului
+
         Runnable actualizeazaTabel = () -> {
             model.setRowCount(0);
             String selectie = (String) conturiClientBox.getSelectedItem();
@@ -1000,10 +1023,10 @@ public class ClientFrame extends JFrame {
             }
         };
 
-        // Populăm inițial tabelul
+
         actualizeazaTabel.run();
 
-        // Eveniment: schimbarea selecției din dropdown
+
         conturiClientBox.addActionListener((ActionEvent e) -> actualizeazaTabel.run());
 
         return panel;

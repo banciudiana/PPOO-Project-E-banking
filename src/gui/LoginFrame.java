@@ -5,14 +5,23 @@ import model.*;
 import javax.swing.*;
 import java.awt.*;
 
+
 /**
- * Fereastra de login.
+ * Fereastra pentru autentificarea unui client in aplicatia eBanking.
+ * Permite introducerea email-ului si parolei si autentificarea
+ * sau redirectionarea catre inregistrarea unui cont nou.
  */
 public class LoginFrame extends JFrame {
 
     private Banca banca;
     private JTextField emailField;
     private JPasswordField passField;
+
+    /**
+     * Constructor pentru fereastra de login.
+     *
+     * @param banca Referinta la obiectul Banca, pentru acces la datele clientilor.
+     */
 
     public LoginFrame(Banca banca) {
         this.banca = banca;
@@ -48,7 +57,7 @@ public class LoginFrame extends JFrame {
             if (c != null) {
                 AuditService.log("Utilizator autentificat GUI: " + email);
                 JOptionPane.showMessageDialog(this, "Autentificare reusita. Bun venit, " + c.getNume());
-                // deschidem ClientFrame
+
                 SwingUtilities.invokeLater(() -> {
                     new ClientFrame(banca, c).setVisible(true);
                 });

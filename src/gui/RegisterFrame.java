@@ -7,7 +7,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Fereastra moderna de creare cont (formular centrat).
+ * Fereastra de creare cont .
  */
 public class RegisterFrame extends JFrame {
 
@@ -26,9 +26,7 @@ public class RegisterFrame extends JFrame {
         setLayout(new BorderLayout());
 
         JLabel title = new JLabel("Formular creare cont nou");
-        title.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        title.setHorizontalAlignment(SwingConstants.CENTER);
-        title.setBorder(BorderFactory.createEmptyBorder(15, 0, 10, 0));
+
         add(title, BorderLayout.NORTH);
 
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -38,7 +36,7 @@ public class RegisterFrame extends JFrame {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
-        Font font = new Font("Segoe UI", Font.PLAIN, 14);
+        Font font = new Font("SansSerif", Font.PLAIN, 14);
 
         // Linie 1: nume + email
         gbc.gridx = 0; gbc.gridy = 0;
@@ -71,7 +69,7 @@ public class RegisterFrame extends JFrame {
         gbc.gridx = 0; gbc.gridy = 4;
         formPanel.add(new JLabel("Valuta:"), gbc);
         gbc.gridx = 1;
-        valutaBox = new JComboBox<>(new String[]{"RON", "EUR"});
+        valutaBox = new JComboBox<>(new String[]{"RON", "EUR", "USD", "GBP"});
         valutaBox.setFont(font);
         formPanel.add(valutaBox, gbc);
 
@@ -85,11 +83,7 @@ public class RegisterFrame extends JFrame {
 
         // Buton creare cont
         JButton createBtn = new JButton("Creeaza cont");
-        createBtn.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        createBtn.setBackground(new Color(66, 135, 245));
-        createBtn.setForeground(Color.WHITE);
-        createBtn.setFocusPainted(false);
-        createBtn.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
+        createBtn.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
         gbc.gridx = 0; gbc.gridy = 6; gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
