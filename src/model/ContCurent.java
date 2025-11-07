@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
  */
 
 public class ContCurent extends ContBancar {
-    private static final double COMISION = 2.5;
 
     public ContCurent(int id, double sold, Client client, String valuta, LocalDateTime creationDate) {
         super(id, sold, client, valuta, creationDate);
@@ -38,9 +37,9 @@ public class ContCurent extends ContBancar {
 
     @Override
     public void retrage(double suma) throws Exception {
-        if (sold - suma - COMISION < 0)
+        if (sold - suma< 0)
             throw new Exception("Sold insuficient!");
-        sold -= (suma + COMISION);
+        sold -= (suma );
     }
 
 

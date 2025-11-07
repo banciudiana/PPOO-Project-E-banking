@@ -32,6 +32,18 @@ public abstract class ContBancar {
     public LocalDateTime getCreationDate() { return creationDate; }
     public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
 
+    public void schimbaValuta(String valutaNoua) throws Exception {
+        if (this.valuta.equalsIgnoreCase(valutaNoua)) {
+            throw new Exception("Contul este deja în " + valutaNoua);
+        }
+
+        // Convertește soldul la noua valută
+        double soldNou = service.CursValutarService.convert(this.sold, this.valuta, valutaNoua);
+
+        this.sold = soldNou;
+        this.valuta = valutaNoua;
+    }
+
     @Override
     public String toString() {
         return "Cont ID: " + id + " | Sold: " + sold + " " + valuta + " | Client: " + client.getNume()

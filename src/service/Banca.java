@@ -3,6 +3,7 @@ package service;
 import exceptions.DateInvalideException;
 import model.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -25,6 +26,12 @@ public class Banca {
         // calculeaza next ids pe baza datelor incarcate
         for (Client c : clienti) nextClientId = Math.max(nextClientId, c.getId() + 1);
         for (Integer id : conturi.keySet()) nextContId = Math.max(nextContId, id + 1);
+
+        LocalDate ultimaData = FileManager.citesteUltimaDataDobanda();
+        if (ultimaData.isBefore(LocalDate.now().withDayOfMonth(1))) {
+            aplicaDobandaLunaraPentruToateConturile();
+            FileManager.salveazaUltimaDataDobanda(LocalDate.now());
+        }
 
         System.out.println("Incarcat tranzactii: " + tranzactii.size());
     }
@@ -168,6 +175,8 @@ public class Banca {
         return lista;
     }
 
+
+
     /**
      * Executa retragere cu reguli speciale pentru conturile BONUS.
      */
@@ -189,5 +198,37 @@ public class Banca {
 
         cont.retrage(suma);
         salveazaDate();
+    }
+
+
+    public void inchideCont(int contId, int clientId) throws Exception {
+        ContBancar cont = conturi.get(contId);
+
+        if (cont == null) {
+            throw new Exception("Contul nu există!");
+        }
+
+        if (cont.getClient().getId() != clientId) {
+            throw new Exception("Nu poți închide un cont care nu îți aparține!");
+        }
+
+
+        if (Math.abs(cont.getSold()) > 0.01) {
+            throw new Exception(String.format(
+                    "Contul trebuie să aibă sold 0 pentru a fi închis!\nSold curent: %.2f %s",
+                    cont.getSold(), cont.getValuta()
+            ));
+        }
+
+        conturi.remove(contId);
+
+
+        tranzactii.removeIf(t ->
+                t.getSursa().getId() == contId || t.getDestinatie().getId() == contId
+        );
+
+        salveazaDate();
+
+        AuditService.log("Cont închis: " + contId + " (Client: " + cont.getClient().getNume() + ")");
     }
 }

@@ -14,3 +14,73 @@
 2025-11-06 14:49:25 - Utilizator autentificat GUI: ana.elena@gmail.com
 2025-11-06 15:02:19 - LOGIN reusit pentru: ana.elena@gmail.com
 2025-11-06 15:02:19 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-06 15:10:49 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-06 15:10:49 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-06 15:13:36 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-06 15:13:36 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:03:41 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:03:41 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:05:55 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:05:55 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:07:00 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:07:00 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:07:40 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:07:40 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:14:24 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:14:24 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:24:41 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:24:41 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:25:02 - Conversie valută: Cont 1001 din EUR în RON (40.00 → 203.60)
+2025-11-07 11:29:16 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:29:16 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:31:04 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:31:04 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:53:07 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:53:07 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:56:38 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:56:38 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 11:58:36 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 11:58:36 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 12:00:55 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 12:00:55 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 12:01:24 - Cont închis: 1000 (Client: Ana)
+2025-11-07 12:02:12 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 12:02:12 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 12:02:34 - Conversie valută: Cont 1001 din RON în EUR (203.60 → 40.72)
+2025-11-07 12:02:53 - Conversie valută: Cont 1001 din EUR în RON (40.72 → 207.26)
+2025-11-07 12:02:59 - Conversie valută: Cont 1001 din RON în EUR (207.26 → 41.45)
+2025-11-07 12:03:13 - Conversie valută: Cont 1001 din EUR în RON (41.45 → 211.00)
+2025-11-07 12:03:26 - Conversie valută: Cont 1001 din RON în EUR (211.00 → 42.20)
+2025-11-07 12:09:57 - LOGIN esuat pentru: ana.elena@gmail.com
+2025-11-07 12:09:57 - Autentificare esuata GUI: ana.elena@gmail.com
+2025-11-07 12:10:03 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 12:10:03 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 12:10:28 - Conversie valută: Cont 1001 din EUR în RON (42.20 → 211.00)
+2025-11-07 12:10:35 - Conversie valută: Cont 1001 din RON în EUR (211.00 → 41.44)
+2025-11-07 12:10:40 - Conversie valută: Cont 1001 din EUR în RON (41.44 → 207.20)
+2025-11-07 13:55:14 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 13:55:14 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 13:58:56 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 13:58:56 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 13:59:55 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 13:59:55 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 14:00:02 - Conversie valută: Cont 1001 din RON în EUR (211.34 → 41.51)
+2025-11-07 14:00:08 - Conversie valută: Cont 1002 din EUR în RON (1050.00 → 5250.00)
+2025-11-07 14:05:36 - LOGIN reusit pentru: ana.elena@gmail.com
+2025-11-07 14:05:36 - Utilizator autentificat GUI: ana.elena@gmail.com
+2025-11-07 14:05:45 - Conversie valută: Cont 1001 din EUR în RON (41.51 → 207.54)
+2025-11-07 14:05:56 - Conversie valută: Cont 1002 din RON în EUR (5250.00 → 1031.10)
+2025-11-07 14:09:16 - LOGIN reusit pentru: diana.banciu@com
+2025-11-07 14:09:16 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-07 14:10:43 - LOGIN esuat pentru: diana.banciu@com
+2025-11-07 14:10:43 - Autentificare esuata GUI: diana.banciu@com
+2025-11-07 14:10:47 - LOGIN reusit pentru: diana.banciu@com
+2025-11-07 14:10:47 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-07 14:11:20 - LOGIN reusit pentru: diana.banciu@com
+2025-11-07 14:11:20 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-07 14:21:10 - LOGIN esuat pentru: diana.banciu@com
+2025-11-07 14:21:10 - Autentificare esuata GUI: diana.banciu@com
+2025-11-07 14:21:14 - LOGIN reusit pentru: diana.banciu@com
+2025-11-07 14:21:14 - Utilizator autentificat GUI: diana.banciu@com
+2025-11-07 14:21:49 - LOGIN reusit pentru: diana.banciu@com
+2025-11-07 14:21:49 - Utilizator autentificat GUI: diana.banciu@com

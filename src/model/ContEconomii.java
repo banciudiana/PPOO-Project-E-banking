@@ -4,6 +4,7 @@ import exceptions.RetragereInainteDePerioadaException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class ContEconomii extends ContBancar implements ContCuDobanda {
 
@@ -14,7 +15,7 @@ public class ContEconomii extends ContBancar implements ContCuDobanda {
     private double dobandaAcumulata = 0.0;
     private TipEconomii tipEconomii;
 
-    // constructor care primește și creationDate + tip
+
     public ContEconomii(int id, double sold, Client client, String valuta,
                         LocalDateTime creationDate, TipEconomii tipEconomii, double dobandaAcumulataInitiala) {
         super(id, sold, client, valuta, creationDate);
@@ -22,22 +23,21 @@ public class ContEconomii extends ContBancar implements ContCuDobanda {
         this.dobandaAcumulata = dobandaAcumulataInitiala;
     }
 
-    // versiune compatibila
-    // constructor compatibil pentru cazuri simple (fără tip explicit)
+
     public ContEconomii(int id, double sold, Client client, String valuta) {
         this(id, sold, client, valuta, LocalDateTime.now(), TipEconomii.ECONOMII, 0.0);
     }
 
     @Override
     public double calculeazaDobanda() {
-        // returnează dobânda curentă (posibilă pentru o perioadă de calcul)
+
         if (tipEconomii == TipEconomii.BONUS) {
-            // dacă are deja 4 luni sau mai mult, aplicăm 5% la sold
+
             long luni = calculeazaLuniDeLaCreare();
             if (luni >= 4) {
                 return sold * DOBANDA_BONUS;
             } else {
-                // poate afișăm 0 sau procent parțial; pentru simplitate: 0 până la 4 luni
+
                 return 0.0;
             }
         } else {
@@ -59,18 +59,27 @@ public class ContEconomii extends ContBancar implements ContCuDobanda {
     }
 
     public long calculeazaLuniDeLaCreare() {
-        Duration d = Duration.between(creationDate, LocalDateTime.now());
-        return d.toDays() / 30; // aproximare în luni (30 zile)
+        return ChronoUnit.MONTHS.between(creationDate, LocalDateTime.now());
     }
 
     /** Aplica dobanda lunara (sau apelata de banca odata pe luna). Adauga in dobandaAcumulata. */
     public void aplicaDobandaLunara() {
-        double procent = (tipEconomii == TipEconomii.BONUS && calculeazaLuniDeLaCreare() >= 4)
-                ? DOBANDA_BONUS
-                : (tipEconomii == TipEconomii.ECONOMII ? DOBANDA_ECONOMII : 0.0);
+        double procent = 0.0;
 
-        double valoare = sold * procent; // poți schimba formula la nevoie (ex: procent/12)
-        dobandaAcumulata += valoare;
+        if (tipEconomii == TipEconomii.BONUS) {
+            long luni = calculeazaLuniDeLaCreare();
+            if (luni >= 4) {
+                procent = DOBANDA_BONUS; // 5% după 4 luni
+            }
+        } else if (tipEconomii == TipEconomii.ECONOMII) {
+            procent = DOBANDA_ECONOMII; // 2%
+        }
+
+        if (procent > 0) {
+            double dobanda = sold * procent;
+            sold += dobanda;
+            dobandaAcumulata = dobanda;
+        }
     }
 
     /** Retragere standard: respecta regula 50% si, pentru BONUS, arunca exceptie daca vrei confirmare (vezi UI) */
@@ -109,4 +118,25 @@ public class ContEconomii extends ContBancar implements ContCuDobanda {
     public void depune(double suma) {
         sold += suma;
     }
+
+    @Override
+    public void schimbaValuta(String valutaNoua) throws Exception {
+        if (this.valuta.equalsIgnoreCase(valutaNoua)) {
+            throw new Exception("Contul este deja în " + valutaNoua);
+        }
+
+        String valutaVeche = this.valuta;
+
+        double soldNou = service.CursValutarService.convert(this.sold, valutaVeche, valutaNoua);
+        double dobandaNoua = this.dobandaAcumulata > 0
+                ? service.CursValutarService.convert(this.dobandaAcumulata, valutaVeche, valutaNoua)
+                : 0.0;
+
+        this.sold = soldNou;
+        this.dobandaAcumulata = dobandaNoua;
+        this.valuta = valutaNoua;
+    }
+
+
+
 }

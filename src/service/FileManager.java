@@ -3,6 +3,7 @@ package service;
 import model.*;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -172,6 +173,22 @@ public class FileManager {
             }
         } catch (Exception e) {
             System.out.println("Eroare la salvarea tranzactiilor: " + e.getMessage());
+        }
+    }
+
+    public static LocalDate citesteUltimaDataDobanda() {
+        try (BufferedReader br = new BufferedReader(new FileReader("data/ultima_dobanda.txt"))) {
+            return LocalDate.parse(br.readLine());
+        } catch (Exception e) {
+            return LocalDate.MIN;
+        }
+    }
+
+    public static void salveazaUltimaDataDobanda(LocalDate data) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter("data/ultima_dobanda.txt"))) {
+            pw.println(data.toString());
+        } catch (IOException e) {
+            System.out.println("Eroare la scrierea ultimei date de dobanda: " + e.getMessage());
         }
     }
 }

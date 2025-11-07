@@ -7,8 +7,8 @@ import java.util.*;
  * Incarca cursul valutar din fisier si ofera conversii simple.
  */
 public class CursValutarService {
-    private static double ronToEur = 0.20;
-    private static double eurToRon = 5.0;
+    private static double ronToEur;
+    private static double eurToRon;
     private static final String PATH = "data/curs.txt";
 
     public static void incarcaCursuri() {
@@ -39,4 +39,17 @@ public class CursValutarService {
 
     public static double getRonToEur() { return ronToEur; }
     public static double getEurToRon() { return eurToRon; }
+
+    public static String getCurs(String din, String in) {
+        if (din.equalsIgnoreCase(in)) {
+            return "1.00";
+        }
+        if (din.equalsIgnoreCase("RON") && in.equalsIgnoreCase("EUR")) {
+            return String.format("1 RON = %.4f EUR", ronToEur);
+        }
+        if (din.equalsIgnoreCase("EUR") && in.equalsIgnoreCase("RON")) {
+            return String.format("1 EUR = %.4f RON", eurToRon);
+        }
+        return "necunoscut";
+    }
 }

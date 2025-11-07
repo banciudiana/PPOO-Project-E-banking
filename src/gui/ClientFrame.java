@@ -15,6 +15,8 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 import java.text.DecimalFormat;
+import javax.swing.event.MouseInputAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * Interfata GUI pentru un client logat.
@@ -59,6 +61,273 @@ public class ClientFrame extends JFrame {
         tableModel = new DefaultTableModel(coloane, 0);
         conturiTable = new JTable(tableModel);
         actualizeazaConturi();
+
+        JPopupMenu popupMenu = new JPopupMenu();
+        JMenuItem adaugaDobandaItem = new JMenuItem("Adaugă dobândă acumulată în sold");
+        JMenuItem modificaMonedaItem = new JMenuItem("Modifică moneda");
+        JMenuItem inchideContItem = new JMenuItem("Închide contul");
+
+        popupMenu.add(adaugaDobandaItem);
+        popupMenu.addSeparator();
+        popupMenu.add(modificaMonedaItem);
+        popupMenu.addSeparator();
+        popupMenu.add(inchideContItem);
+
+
+        adaugaDobandaItem.addActionListener(e -> {
+            int selectedRow = conturiTable.getSelectedRow();
+            if (selectedRow != -1) {
+                int contId = (int) tableModel.getValueAt(selectedRow, 0);
+                JOptionPane.showMessageDialog(this,
+                        "Funcționalitate în dezvoltare: Adaugă dobândă pentru contul " + contId);
+            }
+        });
+
+        modificaMonedaItem.addActionListener(e -> {
+            int selectedRow = conturiTable.getSelectedRow();
+            if (selectedRow != -1) {
+                int contId = (int) tableModel.getValueAt(selectedRow, 0);
+                ContBancar cont = banca.getConturi().get(contId);
+
+                if (cont == null) {
+                    JOptionPane.showMessageDialog(this, "Cont inexistent!");
+                    return;
+                }
+
+                // Verifică că aparține clientului curent
+                if (cont.getClient().getId() != client.getId()) {
+                    JOptionPane.showMessageDialog(this, "Nu poți modifica un cont care nu îți aparține!");
+                    return;
+                }
+
+                // Determină valuta curentă și cea nouă
+                String valutaCurenta = cont.getValuta();
+                String valutaNoua = valutaCurenta.equalsIgnoreCase("RON") ? "EUR" : "RON";
+
+                // Calculează soldul convertit
+                try {
+                    double soldCurent = cont.getSold();
+                    double soldConvertit = CursValutarService.convert(soldCurent, valutaCurenta, valutaNoua);
+
+
+                    String mesaj = String.format("""
+                 ATENȚIE: Conversie valutară
+                
+                Contul %d va fi convertit din %s în %s.
+                
+                 Detalii conversie:
+                • Sold actual: %.2f %s
+                • Sold după conversie: %.2f %s
+                • Curs aplicat: %s
+                
+                IMPORTANT:
+                Această operațiune va converti permanent 
+                soldul contului la cursul curent de schimb.
+                
+                Viitoarele operațiuni (depuneri, retrageri, 
+                transferuri) vor utiliza cursul valutar 
+                din momentul efectuării lor.
+                
+                Dorești să continui?
+                """,
+                            contId, valutaCurenta, valutaNoua,
+                            soldCurent, valutaCurenta,
+                            soldConvertit, valutaNoua,
+                            CursValutarService.getCurs(valutaCurenta, valutaNoua)
+                    );
+
+                    int confirm = JOptionPane.showConfirmDialog(
+                            this,
+                            mesaj,
+                            "Confirmare conversie valutară",
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    if (confirm != JOptionPane.YES_OPTION) {
+                        return;
+                    }
+
+                    // Efectuează schimbarea
+                    cont.schimbaValuta(valutaNoua);
+                    banca.salveazaDate();
+
+                    // Mesaj de succes
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.format("""
+                    Conversie realizată cu succes!
+                    
+                    Contul %d este acum în %s
+                    Sold nou: %.2f %s
+                    """,
+                                    contId, valutaNoua, soldConvertit, valutaNoua),
+                            "Succes",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    // Actualizează tabelul
+                    actualizeazaConturi();
+
+                    // Log audit
+                    AuditService.log(String.format(
+                            "Conversie valută: Cont %d din %s în %s (%.2f → %.2f)",
+                            contId, valutaCurenta, valutaNoua, soldCurent, soldConvertit
+                    ));
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Eroare la conversie: " + ex.getMessage(),
+                            "Eroare",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        });
+
+        inchideContItem.addActionListener(e -> {
+            int selectedRow = conturiTable.getSelectedRow();
+            if (selectedRow != -1) {
+                int contId = (int) tableModel.getValueAt(selectedRow, 0);
+                ContBancar cont = banca.getConturi().get(contId);
+
+                if (cont == null) {
+                    JOptionPane.showMessageDialog(this, "Cont inexistent!");
+                    return;
+                }
+
+
+                if (cont.getClient().getId() != client.getId()) {
+                    JOptionPane.showMessageDialog(this,
+                            "Nu poți închide un cont care nu îți aparține!",
+                            "Eroare",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+
+                double sold = cont.getSold();
+                if (Math.abs(sold) > 0.01) {
+
+                    String mesaj = String.format("""
+                Nu poți închide acest cont!
+                
+                Contul %d are un sold de %.2f %s
+                
+                Pentru a închide contul, soldul trebuie să fie 0.
+                
+                Sugestii:
+                • Retrage suma disponibilă
+                • Transferă banii în alt cont
+                • Verifică dacă ai dobândă acumulată neaplicată
+                """,
+                            contId, sold, cont.getValuta()
+                    );
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            mesaj,
+                            "Sold diferit de zero",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+
+
+                String tipCont = cont.getClass().getSimpleName();
+                if (cont instanceof ContEconomii) {
+                    ContEconomii ce = (ContEconomii) cont;
+                    tipCont += " (" + ce.getTip() + ")";
+                }
+
+                String mesajConfirmare = String.format("""
+            Ești sigur că vrei să închizi acest cont?
+            
+           Detalii cont:
+            • ID: %d
+            • Tip: %s
+            • Valută: %s
+            • Data creare: %s
+            
+            ATENȚIE:
+            Această acțiune este PERMANENTĂ și IREVERSIBILĂ!
+            Contul și istoricul acestuia vor fi șterse definitiv.
+            
+            Dorești să continui?
+            """,
+                        contId,
+                        tipCont,
+                        cont.getValuta(),
+                        cont.getCreationDate().format(formatter)
+                );
+
+                int confirm = JOptionPane.showConfirmDialog(
+                        this,
+                        mesajConfirmare,
+                        "Confirmare închidere cont",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (confirm != JOptionPane.YES_OPTION) {
+                    return;
+                }
+
+                // ȘTERGERE FINALĂ
+                try {
+                    banca.inchideCont(contId, client.getId());
+
+                    JOptionPane.showMessageDialog(
+                            this,
+                            String.format("""
+                     Contul %d a fost închis cu succes!
+                    
+                    Contul și tranzacțiile asociate 
+                    au fost șterse definitiv.
+                    """,
+                                    contId),
+                            "Succes",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                    // Actualizează tabelul
+                    actualizeazaConturi();
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Eroare la închiderea contului:\n" + ex.getMessage(),
+                            "Eroare",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
+        });
+
+        conturiTable.addMouseListener(new MouseInputAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showPopup(e);
+                }
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger()) {
+                    showPopup(e);
+                }
+            }
+
+            private void showPopup(MouseEvent e) {
+                int row = conturiTable.rowAtPoint(e.getPoint());
+                if (row >= 0 && row < conturiTable.getRowCount()) {
+                    conturiTable.setRowSelectionInterval(row, row);
+                    popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        });
 
         panel.add(new JScrollPane(conturiTable), BorderLayout.CENTER);
         return panel;
@@ -236,28 +505,24 @@ public class ClientFrame extends JFrame {
                         return;
                     }
 
-                    // Calculăm comisionul în valuta selectată
-                    double comision = suma * 0.025;
-                    double sumaDupaComision = suma - comision;
+
+                    double sumaDupaComision = suma;
 
                     // Cazul 1: Aceeași valută
                     if (cont.getValuta().equalsIgnoreCase(valutaSelectata)) {
                         int confirm = JOptionPane.showConfirmDialog(this,
                                 String.format("""
-                    Depunere în %s:
-                    Suma depusă: %.2f %s
-                    Comision (2%%): %.2f %s
-                    Se adaugă în cont: %.2f %s
-                    
-                    Dorești să continui?
-                    """,
+                                    Depunere în %s:
+                                    Suma depusă: %.2f %s
+                                    Se adaugă în cont: %.2f %s
+                                    
+                                    Dorești să continui?
+                                    """,
                                         cont.getValuta(), suma, valutaSelectata,
-                                        comision, valutaSelectata,
                                         sumaDupaComision, cont.getValuta()),
                                 "Confirmare depunere",
                                 JOptionPane.OK_CANCEL_OPTION,
                                 JOptionPane.QUESTION_MESSAGE);
-
                         if (confirm != JOptionPane.OK_OPTION) return;
                         cont.setSold(cont.getSold() + sumaDupaComision);
                     }
@@ -269,22 +534,18 @@ public class ClientFrame extends JFrame {
 
                         int confirm = JOptionPane.showConfirmDialog(this,
                                 String.format("""
-                    Conversie valutară:
-                    Suma depusă: %.2f %s
-                    Comision (2%%): %.2f %s
-                    Suma după comision: %.2f %s
-                    Echivalent în cont: %.2f %s
-                    
-                    Dorești să continui?
-                    """,
+                                Conversie valutară:
+                                Suma depusă: %.2f %s
+                                Echivalent în cont: %.2f %s
+                                Curs valutar aplicat
+                                
+                                Dorești să continui?
+                                """,
                                         suma, valutaSelectata,
-                                        comision, valutaSelectata,
-                                        sumaDupaComision, valutaSelectata,
                                         sumaConvertita, cont.getValuta()),
                                 "Conversie valutară",
                                 JOptionPane.OK_CANCEL_OPTION,
                                 JOptionPane.WARNING_MESSAGE);
-
                         if (confirm != JOptionPane.OK_OPTION) return;
                         cont.setSold(cont.getSold() + sumaConvertita);
                     }
@@ -349,7 +610,7 @@ public class ClientFrame extends JFrame {
                         return;
                     }
 
-                    // convertim suma introdusă (principalul) în valuta contului
+                    // Convertim suma în valuta contului
                     double sumaInValutaCont;
                     if (cont.getValuta().equalsIgnoreCase(valutaSelectata)) {
                         sumaInValutaCont = suma;
@@ -357,51 +618,33 @@ public class ClientFrame extends JFrame {
                         sumaInValutaCont = CursValutarService.convert(suma, valutaSelectata, cont.getValuta());
                     }
 
-                    // calcul comision (în valuta contului) — păstrăm regula ta 2%
-                    double comision = sumaInValutaCont * 0.025;
-                    double totalNecesare = sumaInValutaCont + comision;
-
-                    // verificare fonduri (inclusiv comision) — dar retragerea în model va verifica regulile specifice
-                    if (cont.getSold() < totalNecesare) {
-                        JOptionPane.showMessageDialog(this,
-                                String.format("Fonduri insuficiente!\nNecesar: %.2f %s\nDisponibil: %.2f %s",
-                                        totalNecesare, cont.getValuta(), cont.getSold(), cont.getValuta()));
-                        return;
-                    }
-
-                    // afisare confirmare catre utilizator (valorile în valuta contului)
+                    // Afișare confirmare
                     int confirm = JOptionPane.showConfirmDialog(this,
-                            String.format("Retragere:\nSuma: %.2f %s (echivalent %.2f %s)\nComision (2%%): %.2f %s\nTotal scăzut: %.2f %s\n\nDorești să continui?",
-                                    suma, valutaSelectata, sumaInValutaCont, cont.getValuta(),
-                                    comision, cont.getValuta(),
-                                    totalNecesare, cont.getValuta()),
+                            String.format("""
+                Retragere:
+                Suma: %.2f %s
+                Echivalent în cont: %.2f %s
+                
+                Dorești să continui?
+                """,
+                                    suma, valutaSelectata,
+                                    sumaInValutaCont, cont.getValuta()),
                             "Confirmare retragere",
                             JOptionPane.OK_CANCEL_OPTION);
 
                     if (confirm != JOptionPane.OK_OPTION) return;
 
-                    // --- APELĂ MODELUL pentru principal (nu pentru total)
-                    // retragerea in model este doar pentru "sumaInValutaCont" — modelul va valida regula 50% pentru ContEconomii
-                    try {
-                        cont.retrage(sumaInValutaCont); // poate arunca Exception (ex: depasire 50% sau sold insuficient pentru conturile curente)
-                    } catch (Exception modelEx) {
-                        // afișăm eroarea modelului (ex: "Poți retrage maxim 50%...")
-                        JOptionPane.showMessageDialog(this, modelEx.getMessage(), "Avertisment", JOptionPane.WARNING_MESSAGE);
-                        return;
-                    }
-
-                    // după ce modelul a acceptat retragerea principalului, scădem comisionul separat
-                    cont.setSold(cont.getSold() - comision);
-
-                    // salvăm și logăm
+                    // Apelează modelul pentru validare și retragere
+                    cont.retrage(sumaInValutaCont);
                     banca.salveazaDate();
+
                     JOptionPane.showMessageDialog(this, "Retragere efectuată cu succes!");
                     actualizeazaConturi();
 
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Suma nu este un număr valid.");
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Eroare: " + ex.getMessage());
+                    JOptionPane.showMessageDialog(this, ex.getMessage(), "Eroare", JOptionPane.ERROR_MESSAGE);
                 }
             });
 
